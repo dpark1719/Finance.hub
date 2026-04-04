@@ -1,7 +1,10 @@
 /**
- * Unofficial Yahoo Finance endpoints. Uses cookie + crumb auth for
- * quoteSummary, rate limit retries, per-symbol caches, and host failover.
+ * Unofficial Yahoo Finance endpoints. Uses curl as HTTP transport to avoid
+ * TLS fingerprint detection, cookie+crumb auth for quoteSummary, per-symbol
+ * caches, and 429 retry with backoff.
  */
+
+import { execSync } from "node:child_process";
 
 import {
   YAHOO_CHART_PRESETS,
@@ -10,8 +13,7 @@ import {
 
 export type { YahooChartRangeKey } from "@/lib/yahoo-chart-presets";
 
-const UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+const UA = "Mozilla/5.0 (compatible)";
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((r) => setTimeout(r, ms));
@@ -36,121 +38,127 @@ function cacheSet<T>(m: Map<string, Timed<T>>, key: string, data: T) {
   m.set(key, { at: Date.now(), data });
 }
 
+/* ── curl-based HTTP transport (avoids TLS fingerprint blocking) ── */
+
+interface CurlResult {
+  status: number;
+  body: string;
+  headers: Record<string, string>;
+}
+
+function curlGet(
+  url: string,
+  opts?: { cookie?: string; extraHeaders?: Record<string, string>; timeout?: number },
+): CurlResult {
+  const hdrs = [
+    `-H "User-Agent: ${UA}"`,
+    `-H "Accept: application/json,text/plain,*/*"`,
+    `-H "Accept-Language: en-US,en;q=0.9"`,
+    `-H "Referer: https://finance.yahoo.com/"`,
+  ];
+  if (opts?.cookie) hdrs.push(`-H "Cookie: ${opts.cookie}"`);
+  for (const [k, v] of Object.entries(opts?.extraHeaders ?? {})) {
+    hdrs.push(`-H "${k}: ${v}"`);
+  }
+  const timeout = opts?.timeout ?? 30;
+  const cmd = `curl -sS -m ${timeout} -D - ${hdrs.join(" ")} "${url}"`;
+  const raw = execSync(cmd, {
+    encoding: "utf-8",
+    maxBuffer: 10 * 1024 * 1024,
+    timeout: (timeout + 5) * 1000,
+  });
+
+  const headerEnd = raw.indexOf("\r\n\r\n");
+  const headerSection = headerEnd >= 0 ? raw.slice(0, headerEnd) : "";
+  const body = headerEnd >= 0 ? raw.slice(headerEnd + 4) : raw;
+
+  let status = 0;
+  const statusMatch = headerSection.match(/^HTTP\/[\d.]+ (\d+)/m);
+  if (statusMatch) status = parseInt(statusMatch[1], 10);
+
+  const headers: Record<string, string> = {};
+  for (const line of headerSection.split("\r\n")) {
+    const idx = line.indexOf(":");
+    if (idx > 0) {
+      const key = line.slice(0, idx).trim().toLowerCase();
+      headers[key] = (headers[key] ? headers[key] + ", " : "") + line.slice(idx + 1).trim();
+    }
+  }
+  return { status, body: body.trim(), headers };
+}
+
 /* ── Yahoo crumb + cookie session ─────────────────────────────── */
 
 let crumbSession: { crumb: string; cookie: string; ts: number } | null = null;
-const CRUMB_TTL_MS = 600_000; // refresh every 10 min
+const CRUMB_TTL_MS = 600_000;
 
-async function ensureCrumbSession(): Promise<{ crumb: string; cookie: string }> {
+function ensureCrumbSessionSync(): { crumb: string; cookie: string } {
   if (crumbSession && Date.now() - crumbSession.ts < CRUMB_TTL_MS) {
     return crumbSession;
   }
 
-  const initRes = await fetch("https://fc.yahoo.com/", {
-    cache: "no-store",
-    headers: { "User-Agent": UA },
-    redirect: "manual",
+  const initRes = curlGet("https://fc.yahoo.com/", {
+    extraHeaders: { Accept: "text/html" },
   });
-  await initRes.text().catch(() => "");
+  const setCookieRaw = initRes.headers["set-cookie"] ?? "";
+  const cookieStr = setCookieRaw
+    .split(/,(?=\s*\w+=)/)
+    .map((c) => c.split(";")[0].trim())
+    .filter(Boolean)
+    .join("; ");
 
-  let cookieStr = "";
-  const getSetCookie = initRes.headers.getSetCookie;
-  if (typeof getSetCookie === "function") {
-    const setCookies = getSetCookie.call(initRes.headers);
-    cookieStr = setCookies
-      .map((c: string) => c.split(";")[0])
-      .filter(Boolean)
-      .join("; ");
-  }
-  if (!cookieStr) {
-    const raw = initRes.headers.get("set-cookie") ?? "";
-    cookieStr = raw
-      .split(/,(?=\s*\w+=)/)
-      .map((c) => c.split(";")[0].trim())
-      .filter(Boolean)
-      .join("; ");
+  const crumbRes = curlGet(
+    "https://query2.finance.yahoo.com/v1/test/getcrumb",
+    { cookie: cookieStr, extraHeaders: { Accept: "*/*" } },
+  );
+  if (crumbRes.status !== 200 || !crumbRes.body) {
+    throw new Error(`Yahoo crumb fetch failed (${crumbRes.status})`);
   }
 
-  const crumbBackoffs = [0, 2000, 4000];
-  let crumb = "";
-  let crumbStatus = 0;
-  for (const wait of crumbBackoffs) {
-    if (wait) await sleep(wait);
-    const crumbRes = await fetch(
-      "https://query2.finance.yahoo.com/v1/test/getcrumb",
-      {
-        cache: "no-store",
-        headers: { "User-Agent": UA, Cookie: cookieStr },
-      },
-    );
-    crumbStatus = crumbRes.status;
-    if (crumbRes.status === 200) {
-      crumb = (await crumbRes.text()).trim();
-      break;
-    }
-    await crumbRes.text().catch(() => "");
-    if (crumbRes.status !== 429) break;
-  }
-
-  if (!crumb) {
-    throw new Error(`Yahoo crumb fetch failed (${crumbStatus})`);
-  }
-
-  crumbSession = { crumb, cookie: cookieStr, ts: Date.now() };
+  crumbSession = { crumb: crumbRes.body.trim(), cookie: cookieStr, ts: Date.now() };
   return crumbSession;
 }
 
-/* ── HTTP helpers ─────────────────────────────────────────────── */
+/* ── High-level Yahoo fetchers using curl ─────────────────────── */
 
-async function yahooGet(url: string): Promise<Response> {
-  return fetch(url, {
-    cache: "no-store",
-    headers: {
-      "User-Agent": UA,
-      Accept: "application/json,text/plain,*/*",
-      "Accept-Language": "en-US,en;q=0.9",
-      Referer: "https://finance.yahoo.com/",
-    },
-  });
+function yahooCurlJson<T>(url: string, auth = false): { status: number; data: T | null } {
+  let cookie: string | undefined;
+  let finalUrl = url;
+  if (auth) {
+    const sess = ensureCrumbSessionSync();
+    cookie = sess.cookie;
+    const sep = url.includes("?") ? "&" : "?";
+    finalUrl = `${url}${sep}crumb=${encodeURIComponent(sess.crumb)}`;
+  }
+  const res = curlGet(finalUrl, { cookie });
+  if (!res.body || res.status !== 200) return { status: res.status, data: null };
+  try {
+    return { status: res.status, data: JSON.parse(res.body) as T };
+  } catch {
+    return { status: res.status, data: null };
+  }
 }
 
-async function yahooGetAuth(url: string): Promise<Response> {
-  const session = await ensureCrumbSession();
-  const sep = url.includes("?") ? "&" : "?";
-  const authedUrl = `${url}${sep}crumb=${encodeURIComponent(session.crumb)}`;
-  return fetch(authedUrl, {
-    cache: "no-store",
-    headers: {
-      "User-Agent": UA,
-      Accept: "application/json,text/plain,*/*",
-      "Accept-Language": "en-US,en;q=0.9",
-      Referer: "https://finance.yahoo.com/",
-      Cookie: session.cookie,
-    },
-  });
-}
-
-/** Exponential backoff on 429; re-fetch crumb once on 401. */
-async function yahooGetWithRetry(
+async function yahooCurlJsonWithRetry<T>(
   url: string,
   auth = false,
-): Promise<Response> {
-  const max = 5;
-  const backoffs = [0, 1500, 3000, 5000, 8000];
-  let last: Response | null = null;
+): Promise<{ status: number; data: T | null }> {
+  const backoffs = [0, 1500, 3000, 5000];
+  let last: { status: number; data: T | null } = { status: 0, data: null };
   let refreshedCrumb = false;
-  for (let i = 0; i < max; i++) {
-    if (backoffs[i]) await sleep(backoffs[i]);
-    last = auth ? await yahooGetAuth(url) : await yahooGet(url);
+  for (const wait of backoffs) {
+    if (wait) await sleep(wait);
+    last = yahooCurlJson<T>(url, auth);
     if (last.status === 401 && auth && !refreshedCrumb) {
       crumbSession = null;
       refreshedCrumb = true;
-      last = await yahooGetAuth(url);
+      last = yahooCurlJson<T>(url, auth);
     }
     if (last.status !== 429) return last;
   }
-  return last!;
+  return last;
 }
+
 
 export function toYahooSymbol(finnhubSymbol: string): string {
   const s = finnhubSymbol.trim().toUpperCase();
@@ -241,11 +249,7 @@ export async function fetchYahooFundamentals(finnhubSymbol: string): Promise<Yah
 
   const modules = "financialData%2CcashflowStatementHistory";
   const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ySym)}?modules=${modules}`;
-  const res = await yahooGetWithRetry(url, true);
-  if (!res.ok) {
-    throw new Error(`Yahoo quoteSummary ${res.status}: ${res.status === 429 ? "Too Many Requests" : res.statusText}`);
-  }
-  const json = (await res.json()) as {
+  const { status, data: json } = await yahooCurlJsonWithRetry<{
     quoteSummary?: {
       error?: { description?: string };
       result?: Array<{
@@ -255,7 +259,11 @@ export async function fetchYahooFundamentals(finnhubSymbol: string): Promise<Yah
         };
       }>;
     };
-  };
+  }>(url, true);
+
+  if (!json || status !== 200) {
+    throw new Error(`Yahoo quoteSummary ${status}: ${status === 429 ? "Too Many Requests" : "failed"}`);
+  }
   const qe = json.quoteSummary?.error;
   if (qe?.description) throw new Error(qe.description);
   const r0 = json.quoteSummary?.result?.[0];
@@ -282,21 +290,8 @@ export async function fetchYahooChart(
   const cached = cacheGet(chartCache, ckey, CHART_CACHE_TTL_MS);
   if (cached) return cached;
 
-  const chartHosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
-  let res: Response | null = null;
-  for (const host of chartHosts) {
-    const url = `https://${host}/v8/finance/chart/${encodeURIComponent(ySym)}?interval=${interval}&range=${range}`;
-    res = await yahooGetWithRetry(url);
-    if (res.status !== 429) break;
-    await sleep(1500);
-  }
-  if (!res || !res.ok) {
-    const st = res?.status ?? 0;
-    throw new Error(
-      `Yahoo chart ${st}: ${st === 429 ? "Too Many Requests" : res?.statusText ?? "failed"}`,
-    );
-  }
-  const json = (await res.json()) as {
+  const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ySym)}?interval=${interval}&range=${range}`;
+  const { status, data: json } = await yahooCurlJsonWithRetry<{
     chart?: {
       error?: { description?: string };
       result?: Array<{
@@ -305,7 +300,13 @@ export async function fetchYahooChart(
         meta?: { currency?: string };
       }>;
     };
-  };
+  }>(chartUrl, false);
+
+  if (!json || status !== 200) {
+    throw new Error(
+      `Yahoo chart ${status}: ${status === 429 ? "Too Many Requests" : "failed"}`,
+    );
+  }
   const err = json.chart?.error;
   if (err?.description) throw new Error(err.description);
   const r = json.chart?.result?.[0];
@@ -346,39 +347,27 @@ export async function fetchYahooLatestFreeCashflow(
   return (await fetchYahooFundamentals(finnhubSymbol)).fcf;
 }
 
-/** Free-text search (e.g. "google" when Finnhub returns no hits). Avoid hammering Yahoo on 429 — no multi-retry loop. */
+/** Free-text search (e.g. "google" when Finnhub returns no hits). */
 export async function searchYahooFinance(
   query: string,
 ): Promise<{ symbol: string; name: string } | null> {
   const q = query.trim().slice(0, 64);
   if (!q) return null;
 
-  const urls = [
-    `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}`,
-    `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}`,
-  ];
+  type SearchResponse = {
+    quotes?: Array<{
+      symbol?: string;
+      quoteType?: string;
+      shortname?: string;
+      longname?: string;
+    }>;
+  };
 
-  for (const url of urls) {
-    let res = await yahooGet(url);
-    if (res.status === 429) {
-      await sleep(2000);
-      res = await yahooGet(url);
-    }
-    if (!res.ok) continue;
-
-    let json: {
-      quotes?: Array<{
-        symbol?: string;
-        quoteType?: string;
-        shortname?: string;
-        longname?: string;
-      }>;
-    };
-    try {
-      json = (await res.json()) as typeof json;
-    } catch {
-      continue;
-    }
+  const hosts = ["query2.finance.yahoo.com", "query1.finance.yahoo.com"];
+  for (const host of hosts) {
+    const url = `https://${host}/v1/finance/search?q=${encodeURIComponent(q)}`;
+    const { status, data: json } = yahooCurlJson<SearchResponse>(url);
+    if (status !== 200 || !json) continue;
 
     const quotes = json.quotes ?? [];
     const equities = quotes.filter((x) => x.quoteType === "EQUITY");

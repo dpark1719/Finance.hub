@@ -1,0 +1,88 @@
+import { NextResponse } from "next/server";
+
+const RATES = [
+  {
+    id: "fed",
+    name: "US Federal Funds Rate",
+    country: "United States",
+    flag: "🇺🇸",
+    current: 4.5,
+    previous: 4.75,
+    lastChange: "2025-12-18",
+    nextMeeting: "2026-05-06",
+    history: [
+      { date: "2024-01", rate: 5.5 },
+      { date: "2024-06", rate: 5.5 },
+      { date: "2024-09", rate: 5.25 },
+      { date: "2024-12", rate: 4.75 },
+      { date: "2025-03", rate: 4.75 },
+      { date: "2025-06", rate: 4.75 },
+      { date: "2025-09", rate: 4.5 },
+      { date: "2025-12", rate: 4.5 },
+      { date: "2026-03", rate: 4.5 },
+    ],
+  },
+  {
+    id: "boj",
+    name: "BOJ Policy Rate",
+    country: "Japan",
+    flag: "🇯🇵",
+    current: 0.5,
+    previous: 0.25,
+    lastChange: "2025-01-24",
+    nextMeeting: "2026-04-25",
+    history: [
+      { date: "2024-01", rate: -0.1 },
+      { date: "2024-03", rate: 0 },
+      { date: "2024-07", rate: 0.1 },
+      { date: "2024-10", rate: 0.25 },
+      { date: "2025-01", rate: 0.5 },
+      { date: "2025-06", rate: 0.5 },
+      { date: "2026-01", rate: 0.5 },
+      { date: "2026-03", rate: 0.5 },
+    ],
+  },
+  {
+    id: "bok",
+    name: "BOK Base Rate",
+    country: "South Korea",
+    flag: "🇰🇷",
+    current: 2.75,
+    previous: 3.0,
+    lastChange: "2025-02-27",
+    nextMeeting: "2026-04-17",
+    history: [
+      { date: "2024-01", rate: 3.5 },
+      { date: "2024-06", rate: 3.5 },
+      { date: "2024-10", rate: 3.25 },
+      { date: "2025-02", rate: 3.0 },
+      { date: "2025-06", rate: 2.75 },
+      { date: "2025-10", rate: 2.75 },
+      { date: "2026-01", rate: 2.75 },
+      { date: "2026-03", rate: 2.75 },
+    ],
+  },
+  {
+    id: "dgs10",
+    name: "US 10-Year Treasury Yield",
+    country: "United States",
+    flag: "🇺🇸",
+    current: 4.21,
+    previous: 4.35,
+    lastChange: "2026-03-28",
+    nextMeeting: null,
+    history: [
+      { date: "2024-01", rate: 4.1 },
+      { date: "2024-06", rate: 4.4 },
+      { date: "2024-09", rate: 3.8 },
+      { date: "2024-12", rate: 4.5 },
+      { date: "2025-06", rate: 4.3 },
+      { date: "2025-12", rate: 4.35 },
+      { date: "2026-03", rate: 4.21 },
+    ],
+  },
+];
+
+export async function GET() {
+  return NextResponse.json(RATES);
+}

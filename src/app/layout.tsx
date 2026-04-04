@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, IBM_Plex_Mono } from "next/font/google";
+import { NavBar } from "@/components/NavBar";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -14,9 +15,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Stock Report Card",
+  title: "Finance.Hub",
   description:
-    "Valuation, fundamentals, and sentiment metrics in one report card view.",
+    "Stock report cards, lifestyle calculator, and personal finance tools.",
 };
 
 export default function RootLayout({
@@ -30,6 +31,7 @@ export default function RootLayout({
         className={`${dmSans.variable} ${plexMono.variable} min-h-screen font-sans antialiased`}
         style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
       >
+        <NavBar />
         {children}
       </body>
     </html>
