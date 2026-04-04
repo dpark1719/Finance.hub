@@ -1,0 +1,186 @@
+"use client";
+
+import type { YahooChartRangeKey } from "@/lib/yahoo-chart-presets";
+import { YAHOO_CHART_PRESETS } from "@/lib/yahoo-chart-presets";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+const RANGE_ORDER: YahooChartRangeKey[] = [
+  "1d",
+  "1w",
+  "1m",
+  "3m",
+  "1y",
+  "5y",
+  "max",
+];
+
+type Point = { t: number; c: number; label: string };
+
+export function StockPriceChart({ symbol }: { symbol: string }) {
+  const [range, setRange] = useState<YahooChartRangeKey>("3m");
+  const [points, setPoints] = useState<Point[]>([]);
+  const [currency, setCurrency] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(
+    async (r: YahooChartRangeKey) => {
+      if (!symbol) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(
+          `/api/chart?symbol=${encodeURIComponent(symbol)}&range=${r}`,
+        );
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setError(typeof data.error === "string" ? data.error : "Chart failed");
+          setPoints([]);
+          return;
+        }
+        const raw = data.points as { t: number; c: number }[];
+        setCurrency(typeof data.currency === "string" ? data.currency : null);
+        setPoints(
+          (raw ?? []).map((p) => ({
+            ...p,
+            label: new Date(p.t * 1000).toLocaleString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: r === "1d" || r === "1w" ? undefined : "numeric",
+              hour: r === "1d" || r === "1w" ? "numeric" : undefined,
+              minute: r === "1d" || r === "1w" ? "2-digit" : undefined,
+            }),
+          })),
+        );
+      } catch {
+        setError("Network error");
+        setPoints([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [symbol],
+  );
+
+  useEffect(() => {
+    load(range);
+  }, [symbol, range, load]);
+
+  return (
+    <section className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-base font-semibold text-white">Price</h3>
+          <p className="text-xs text-zinc-500">
+            Yahoo Finance intraday/daily history (ranges as on Yahoo).
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {RANGE_ORDER.map((k) => (
+            <button
+              key={k}
+              type="button"
+              onClick={() => setRange(k)}
+              className={`rounded-md border px-2.5 py-1 font-mono text-xs font-medium transition ${
+                range === k
+                  ? "border-blue-500/60 bg-blue-600/25 text-blue-200"
+                  : "border-zinc-700 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+              }`}
+            >
+              {YAHOO_CHART_PRESETS[k].label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {error && (
+        <p className="mb-3 text-sm text-amber-200/90" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="h-[280px] w-full" aria-busy={loading}>
+        {loading && points.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+            Loading chart…
+          </div>
+        ) : points.length === 0 ? (
+          <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+            No price data for this symbol.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={points} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="fillPrice" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.35} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+              <XAxis
+                dataKey="t"
+                tickFormatter={(ts) =>
+                  new Date(ts * 1000).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                  })
+                }
+                stroke="#71717a"
+                tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                minTickGap={28}
+              />
+              <YAxis
+                domain={["auto", "auto"]}
+                stroke="#71717a"
+                tick={{ fill: "#a1a1aa", fontSize: 11 }}
+                width={56}
+                tickFormatter={(v) =>
+                  Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })
+                }
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#18181b",
+                  border: "1px solid #3f3f46",
+                  borderRadius: 8,
+                }}
+                labelStyle={{ color: "#e4e4e7" }}
+                formatter={(value: number | string) => [
+                  typeof value === "number"
+                    ? value.toLocaleString(undefined, {
+                        style: currency ? "currency" : "decimal",
+                        currency: currency ?? "USD",
+                        maximumFractionDigits: 2,
+                      })
+                    : value,
+                  "Close",
+                ]}
+                labelFormatter={(_, payload) =>
+                  payload?.[0]?.payload?.label ?? ""
+                }
+              />
+              <Area
+                type="monotone"
+                dataKey="c"
+                stroke="#60a5fa"
+                strokeWidth={1.5}
+                fill="url(#fillPrice)"
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </section>
+  );
+}
