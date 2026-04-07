@@ -9,7 +9,8 @@
     "start": "next start -p 3000",
     "lint": "next lint",
     "generate:lifestyle": "node scripts/generate-lifestyle-cities.mjs",
-    "generate:col-extremes": "node scripts/generate-lifestyle-col-extremes.mjs"
+    "generate:col-extremes": "node scripts/generate-lifestyle-col-extremes.mjs",
+    "generate:sp500": "node scripts/generate-sp500-lookup.mjs"
   },
   "dependencies": {
     "next": "^15.1.0",

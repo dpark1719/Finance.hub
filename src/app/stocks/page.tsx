@@ -69,9 +69,13 @@ export default function Home() {
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
           P/E, consensus upside, PEG, leverage, free cash flow, ROE, RSI, beta,
           CNN Fear &amp; Greed, and dividend payout — graded for quick context.
-          Type a ticker (<span className="font-mono">AAPL</span>) or a company name
-          (<span className="font-mono">apple</span>, <span className="font-mono">google</span>).
-          Not investment advice; data depends on Finnhub coverage and delays.
+          Type a ticker (<span className="font-mono">AAPL</span>,{" "}
+          <span className="font-mono">brk.b</span>) or an{" "}
+          <span className="text-zinc-300">S&amp;P 500</span> company name
+          (<span className="font-mono">apple</span>,{" "}
+          <span className="font-mono">berkshire hathaway</span>). Other names use
+          Finnhub search, with Yahoo fallbacks when the free tier blocks an exchange.
+          Not investment advice; data depends on coverage and delays.
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">

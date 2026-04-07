@@ -1,5 +1,9 @@
 import { resolveCommonStockAlias } from "@/lib/common-stock-aliases";
 import { searchSymbols, type SymbolSearchHit } from "@/lib/finnhub";
+import {
+  isSp500Ticker,
+  resolveSp500Lookup,
+} from "@/lib/sp500-lookup.generated";
 import { searchYahooFinance, yahooTickerToFinnhub } from "@/lib/yahoo";
 
 export interface ResolvedQuery {
@@ -15,9 +19,11 @@ export function looksLikeTickerSymbol(raw: string): boolean {
   const s = raw.trim();
   if (!s) return false;
   if (/\s/.test(s)) return false;
-  if (/[a-z]/.test(s)) return false;
-  if (/^[A-Za-z][a-z]+/.test(s)) return false;
-  return /^[A-Z0-9^.\-]+$/.test(s);
+  const u = s.toUpperCase();
+  if (!/^[A-Z0-9^.\-]+$/.test(u)) return false;
+  // Title-case company name (Apple, Microsoft) — not a ticker
+  if (/^[A-Z][a-z]{2,}$/.test(s)) return false;
+  return true;
 }
 
 function scoreSearchHit(h: SymbolSearchHit): number {
@@ -28,6 +34,8 @@ function scoreSearchHit(h: SymbolSearchHit): number {
   if (t.includes("etf") || t.includes("fund")) sc -= 60;
   const ex = `${h.exchange ?? ""}${h.mic ?? ""}`.toUpperCase();
   if (/NASDAQ|NYSE|NMS|US\W/.test(ex) || ex === "US") sc += 40;
+  const sym = (h.symbol ?? h.displaySymbol ?? "").toUpperCase();
+  if (sym && isSp500Ticker(sym)) sc += 55;
   return sc;
 }
 
@@ -50,16 +58,25 @@ export async function resolveStockQuery(raw: string): Promise<ResolvedQuery> {
     return { symbol: q.toUpperCase(), resolutionNote: null };
   }
 
+  const aliasedEarly = resolveCommonStockAlias(q);
+  if (aliasedEarly) {
+    return {
+      symbol: aliasedEarly,
+      resolutionNote: `Matched “${q}” → ${aliasedEarly} (well-known name)`,
+    };
+  }
+
+  const sp500 = resolveSp500Lookup(q);
+  if (sp500) {
+    return {
+      symbol: sp500,
+      resolutionNote: `Matched “${q}” → ${sp500} (S&P 500)`,
+    };
+  }
+
   const { result } = await searchSymbols(q);
   const hits = result ?? [];
   if (hits.length === 0) {
-    const aliased = resolveCommonStockAlias(q);
-    if (aliased) {
-      return {
-        symbol: aliased,
-        resolutionNote: `Matched “${q}” → ${aliased} (well-known name)`,
-      };
-    }
     const yHit = await searchYahooFinance(q);
     if (!yHit) {
       throw new Error(
