@@ -16,6 +16,7 @@ import {
 } from "@/lib/finnhub";
 import {
   fetchYahooClosesForRsi,
+  fetchYahooFinnhubFallback,
   fetchYahooFundamentals,
   yahooSpacingBeforeChart,
   type YahooFundamentals,
@@ -87,7 +88,7 @@ export async function buildStockReport(
   resolutionNote: string | null = null,
 ): Promise<StockReport> {
   const symbol = symbolRaw.trim().toUpperCase();
-  const warnings: string[] = [];
+  let warnings: string[] = [];
   if (!symbol) {
     return {
       symbol: "",
@@ -114,15 +115,15 @@ export async function buildStockReport(
       fetchCandlesDaily(symbol),
     ]);
 
-  const quote = quoteRes.status === "fulfilled" ? quoteRes.value : null;
+  let quote = quoteRes.status === "fulfilled" ? quoteRes.value : null;
   if (quoteRes.status === "rejected") {
     warnings.push(`Quote request failed: ${rejectionReason(quoteRes.reason)}`);
   }
-  const profile = profileRes.status === "fulfilled" ? profileRes.value : null;
+  let profile = profileRes.status === "fulfilled" ? profileRes.value : null;
   if (profileRes.status === "rejected") {
     warnings.push(`Profile request failed: ${rejectionReason(profileRes.reason)}`);
   }
-  const stockMetric =
+  let stockMetric =
     metricRes.status === "fulfilled" ? metricRes.value : null;
   if (metricRes.status === "rejected") {
     warnings.push(
@@ -137,6 +138,46 @@ export async function buildStockReport(
   let priceTarget =
     targetRes.status === "fulfilled" ? targetRes.value : null;
   let usedYahoo = false;
+  let yahooFundamentalsPrefetched: YahooFundamentals | null = null;
+
+  const fhQuote403 =
+    quoteRes.status === "rejected" && isFinnhubForbidden(quoteRes.reason);
+  const fhProfile403 =
+    profileRes.status === "rejected" && isFinnhubForbidden(profileRes.reason);
+  const fhMetrics403 =
+    metricRes.status === "rejected" && isFinnhubForbidden(metricRes.reason);
+
+  if (fhQuote403 || fhProfile403 || fhMetrics403) {
+    try {
+      const fb = await fetchYahooFinnhubFallback(symbol);
+      yahooFundamentalsPrefetched = fb.fundamentals;
+      usedYahoo = true;
+      if (fhQuote403 && fb.quote) {
+        quote = fb.quote;
+        warnings = warnings.filter((w) => !w.startsWith("Quote request failed"));
+      }
+      if (fhProfile403 && fb.profile?.name) {
+        profile = {
+          ...profile,
+          name: fb.profile.name,
+          exchange: fb.profile.exchange ?? profile?.exchange,
+          currency: fb.profile.currency ?? profile?.currency,
+          country: fb.profile.country ?? profile?.country,
+        };
+        warnings = warnings.filter((w) => !w.startsWith("Profile request failed"));
+      }
+      if (fhMetrics403 && Object.keys(fb.metricBag).length > 0) {
+        stockMetric = {
+          metric: { ...(stockMetric?.metric ?? {}), ...fb.metricBag },
+        };
+        warnings = warnings.filter((w) =>
+          !w.startsWith("Fundamental metrics request failed"),
+        );
+      }
+    } catch (e) {
+      warnings.push(`Yahoo fallback (Finnhub 403): ${rejectionReason(e)}`);
+    }
+  }
 
   const targetLooksEmpty = (t: typeof priceTarget) =>
     t == null ||
@@ -163,7 +204,8 @@ export async function buildStockReport(
 
   if (needTargetYahoo || needFcfYahoo) {
     try {
-      const yf: YahooFundamentals = await fetchYahooFundamentals(symbol);
+      const yf: YahooFundamentals =
+        yahooFundamentalsPrefetched ?? (await fetchYahooFundamentals(symbol));
       const yt = yf.target;
       if (
         needTargetYahoo &&

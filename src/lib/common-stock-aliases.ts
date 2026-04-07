@@ -38,6 +38,8 @@ const ALIASES: Record<string, string> = {
   zoom: "ZM",
   palantir: "PLTR",
   snowflake: "SNOW",
+  /** US OTC; Finnhub free tier often 403s on Seoul listing (005930.KS). */
+  samsung: "SSNLF",
 };
 
 export function resolveCommonStockAlias(raw: string): string | null {
