@@ -17,11 +17,11 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "P1: finance.hub",
-    template: "%s · P1: finance.hub",
+    default: "finance.hub",
+    template: "%s · finance.hub",
   },
   description:
-    "P1: finance.hub — stocks, lifestyle calculator, FX, rates, savings, cards, flows, and calculators.",
+    "finance.hub — stocks, lifestyle calculator, FX, rates, savings, cards, flows, and calculators.",
 };
 
 export const viewport: Viewport = {

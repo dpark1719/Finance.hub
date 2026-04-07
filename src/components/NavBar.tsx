@@ -35,7 +35,7 @@ export function NavBar() {
             href="/"
             className="mr-4 shrink-0 text-sm font-semibold tracking-tight text-slate-900 dark:text-white"
           >
-            P1: finance.hub
+            finance.hub
           </Link>
           <div className="hidden items-center gap-0.5 sm:flex">
             {links.map((l) => {
