@@ -1,8 +1,32 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import {
+  CARS,
+  CAR_TYPES,
+  computeTiers,
+  estimateOwnership,
+  getRate,
+  uniqueMakes,
+  usedCarPrice,
+  type CarModel,
+  type CarType,
+  type CreditTier,
+  type FuelType,
+} from "@/lib/car-data";
+import {
+  buildPeerMarketplaceSingleLink,
+  buildSingleMarketplaceSearchLink,
+  CRAIGSLIST_SITE_OPTIONS,
+  defaultCraigslistSubdomainFromZip,
+  listingPriceSearchBand,
+  mileageSearchWindow,
+  type MileageSearchBand,
+  pickMarketplaceForListing,
+  pickPeerMarketplace,
+} from "@/lib/car-marketplace-links";
 
-type TabId = "compound" | "mortgage" | "fire" | "debt";
+type TabId = "compound" | "mortgage" | "fire" | "debt" | "car";
 
 function formatMoney(n: number): string {
   return n.toLocaleString(undefined, {
@@ -210,6 +234,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "mortgage", label: "Mortgage" },
   { id: "fire", label: "FIRE Calculator" },
   { id: "debt", label: "Debt Payoff" },
+  { id: "car", label: "Car Affordability" },
 ];
 
 export default function CalculatorsPage() {
@@ -352,6 +377,112 @@ export default function CalculatorsPage() {
     const sn = simulateDebt(parsed, "snowball", debtExtra);
     return { avalanche: av, snowball: sn };
   }, [debts, debtExtra]);
+
+  // Car Affordability — string state for clearable inputs
+  const [carIncomeStr, setCarIncomeStr] = useState("75000");
+  const [carDebtsStr, setCarDebtsStr] = useState("300");
+  const [carDownStr, setCarDownStr] = useState("5000");
+  const [carCredit, setCarCredit] = useState<CreditTier>("good");
+  const [carTermStr, setCarTermStr] = useState("60");
+
+  const carIncome = Number(carIncomeStr) || 0;
+  const carDebts = Number(carDebtsStr) || 0;
+  const carDown = Number(carDownStr) || 0;
+  const carTerm = Number(carTermStr) || 60;
+
+  const carTiers = useMemo(
+    () => computeTiers(carIncome, carDebts, carDown, carCredit, carTerm),
+    [carIncome, carDebts, carDown, carCredit, carTerm],
+  );
+
+  // Car finder state
+  const [finderOpen, setFinderOpen] = useState(false);
+  const [finderTier, setFinderTier] = useState(1);
+  const [finderMake, setFinderMake] = useState("any");
+  const [finderType, setFinderType] = useState<CarType | "any">("any");
+  const [finderCondition, setFinderCondition] = useState<"new" | "used" | "any">("any");
+  const [finderMaxYear, setFinderMaxYear] = useState(2026);
+  const [finderMinYear, setFinderMinYear] = useState(2018);
+  const [finderMaxMileage, setFinderMaxMileage] = useState(80000);
+  const [finderFuel, setFinderFuel] = useState<FuelType | "any">("any");
+  const [finderSort, setFinderSort] = useState<"monthly" | "price" | "mileage" | "mpg">("monthly");
+  const [finderZipStr, setFinderZipStr] = useState("90210");
+  const [showPeerMarketplaces, setShowPeerMarketplaces] = useState(false);
+  const [peerCraigslistSite, setPeerCraigslistSite] = useState("losangeles");
+
+  const allMakes = useMemo(() => uniqueMakes(), []);
+  const currentYear = 2026;
+
+  useEffect(() => {
+    if (showPeerMarketplaces) {
+      setPeerCraigslistSite(defaultCraigslistSubdomainFromZip(finderZipStr));
+    }
+  }, [finderZipStr, showPeerMarketplaces]);
+
+  const finderResults = useMemo(() => {
+    const tier = carTiers[finderTier];
+    if (!tier) return [];
+    const budget = tier.maxCarPrice;
+    const rate = getRate(carCredit, false);
+    const usedRate = getRate(carCredit, true);
+
+    const results: {
+      car: CarModel;
+      price: number;
+      year: number;
+      isUsed: boolean;
+      mileage: number | null;
+      monthlyTotal: number;
+    }[] = [];
+
+    for (const car of CARS) {
+      if (finderMake !== "any" && car.make !== finderMake) continue;
+      if (finderType !== "any" && !car.types.includes(finderType)) continue;
+      if (finderFuel !== "any" && car.fuel !== finderFuel) continue;
+
+      if (finderCondition !== "used") {
+        if (car.msrp <= budget && car.years[1] >= currentYear) {
+          const costs = estimateOwnership(car.msrp, carDown, rate, carTerm, car, false);
+          results.push({ car, price: car.msrp, year: currentYear, isUsed: false, mileage: null, monthlyTotal: costs.total });
+        }
+      }
+
+      if (finderCondition !== "new") {
+        for (let yr = Math.max(car.years[0], finderMinYear); yr < Math.min(car.years[1], currentYear); yr++) {
+          if (yr > finderMaxYear) continue;
+          const age = currentYear - yr;
+          const estMileage = age * 12000;
+          if (estMileage > finderMaxMileage) continue;
+          const price = usedCarPrice(car.msrp, age, estMileage);
+          if (price <= budget) {
+            const costs = estimateOwnership(price, carDown, usedRate, carTerm, car, true);
+            results.push({ car, price, year: yr, isUsed: true, mileage: estMileage, monthlyTotal: costs.total });
+          }
+        }
+      }
+    }
+
+    switch (finderSort) {
+      case "price": results.sort((a, b) => a.price - b.price); break;
+      case "mileage": results.sort((a, b) => (a.mileage ?? 0) - (b.mileage ?? 0)); break;
+      case "mpg": results.sort((a, b) => b.car.mpg - a.car.mpg); break;
+      default: results.sort((a, b) => a.monthlyTotal - b.monthlyTotal);
+    }
+    return results.slice(0, 120);
+  }, [carTiers, finderTier, finderMake, finderType, finderCondition, finderFuel, finderSort, finderMinYear, finderMaxYear, finderMaxMileage, carCredit, carDown, carTerm]);
+
+  const sampleCarForTier = useCallback(
+    (tierIdx: number) => {
+      const tier = carTiers[tierIdx];
+      if (!tier) return null;
+      const budget = tier.maxCarPrice;
+      const candidates = CARS.filter((c) => c.msrp <= budget && c.years[1] >= currentYear);
+      if (candidates.length === 0) return null;
+      candidates.sort((a, b) => b.msrp - a.msrp);
+      return candidates[0];
+    },
+    [carTiers],
+  );
 
   const compoundChart = useMemo(() => {
     const { series, years } = compound;
@@ -1005,6 +1136,490 @@ export default function CalculatorsPage() {
                   </dl>
                 </div>
               </div>
+            </div>
+          </section>
+        )}
+        {/* Car Affordability */}
+        {tab === "car" && (
+          <section className="mt-8 space-y-8">
+            <div className="grid gap-8 lg:grid-cols-[340px_1fr] lg:items-start">
+              {/* Inputs */}
+              <div
+                className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+                style={{ ["--card" as string]: "#151a22" } as CSSProperties}
+              >
+                <h2 className="text-lg font-semibold">Your finances</h2>
+                <div className="mt-4 space-y-4">
+                  <label className="block">
+                    <span className="text-sm text-zinc-400">Annual gross income ($)</span>
+                    <input type="number" className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carIncomeStr} onChange={(e) => setCarIncomeStr(e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm text-zinc-400">Monthly debt payments ($)</span>
+                    <input type="number" className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carDebtsStr} onChange={(e) => setCarDebtsStr(e.target.value)} />
+                    <span className="mt-1 block text-xs text-zinc-600">Student loans, credit cards, etc.</span>
+                  </label>
+                  <label className="block">
+                    <span className="text-sm text-zinc-400">Down payment available ($)</span>
+                    <input type="number" className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carDownStr} onChange={(e) => setCarDownStr(e.target.value)} />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm text-zinc-400">Credit score range</span>
+                    <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carCredit} onChange={(e) => setCarCredit(e.target.value as CreditTier)}>
+                      <option value="excellent">Excellent (750+)</option>
+                      <option value="good">Good (700–749)</option>
+                      <option value="fair">Fair (650–699)</option>
+                      <option value="poor">Below 650</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-sm text-zinc-400">Loan term</span>
+                    <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carTermStr} onChange={(e) => setCarTermStr(e.target.value)}>
+                      <option value="36">36 months (3 years)</option>
+                      <option value="48">48 months (4 years)</option>
+                      <option value="60">60 months (5 years)</option>
+                      <option value="72">72 months (6 years)</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              {/* 3-Tier Results */}
+              <div className="space-y-4">
+                <h2 className="text-lg font-semibold">What you can afford</h2>
+                <p className="text-sm text-zinc-400">Based on your income, debts, and credit. Click a tier to find matching cars below.</p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {carTiers.map((tier, idx) => {
+                    const sample = sampleCarForTier(idx);
+                    const isUsed = false;
+                    const r = getRate(carCredit, isUsed);
+                    const costs = sample ? estimateOwnership(Math.min(sample.msrp, tier.maxCarPrice), carDown, r, carTerm, sample, isUsed) : null;
+
+                    return (
+                      <button
+                        key={tier.label}
+                        type="button"
+                        onClick={() => { setFinderTier(idx); setFinderOpen(true); }}
+                        className={`rounded-xl border p-5 text-left transition hover:border-zinc-600 ${
+                          finderOpen && finderTier === idx ? "border-blue-500/50 bg-blue-500/5" : "border-zinc-800 bg-[#151a22]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: tier.color }} />
+                          <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: tier.color }}>{tier.label}</span>
+                        </div>
+
+                        <p className="mt-3 font-mono text-2xl font-semibold text-white">
+                          ${formatMoney(tier.maxCarPrice)}
+                        </p>
+                        <p className="text-xs text-zinc-500">max car price</p>
+
+                        <div className="mt-4 space-y-1.5 text-sm">
+                          <div className="flex justify-between text-zinc-400">
+                            <span>Loan amount</span>
+                            <span className="font-mono text-zinc-300">${formatMoney(tier.loanAmount)}</span>
+                          </div>
+                          <div className="flex justify-between text-zinc-400">
+                            <span>Monthly payment</span>
+                            <span className="font-mono text-zinc-300">${formatMoney(tier.maxMonthlyPayment)}/mo</span>
+                          </div>
+                          <div className="flex justify-between text-zinc-400">
+                            <span>Interest rate</span>
+                            <span className="font-mono text-zinc-300">{tier.rate}%</span>
+                          </div>
+                        </div>
+
+                        {costs && sample && (
+                          <div className="mt-4 border-t border-zinc-800 pt-3">
+                            <p className="text-xs font-medium text-zinc-500">Estimated total monthly cost</p>
+                            <div className="mt-2 space-y-1 text-xs">
+                              <div className="flex justify-between text-zinc-400">
+                                <span>Payment</span>
+                                <span className="font-mono">${formatMoney(costs.monthlyPayment)}</span>
+                              </div>
+                              <div className="flex justify-between text-zinc-400">
+                                <span>Insurance</span>
+                                <span className="font-mono">${formatMoney(costs.insurance)}</span>
+                              </div>
+                              <div className="flex justify-between text-zinc-400">
+                                <span>Gas / energy</span>
+                                <span className="font-mono">${formatMoney(costs.gas)}</span>
+                              </div>
+                              <div className="flex justify-between text-zinc-400">
+                                <span>Maintenance</span>
+                                <span className="font-mono">${formatMoney(costs.maintenance)}</span>
+                              </div>
+                              <div className="mt-1 flex justify-between border-t border-zinc-800 pt-1 font-medium text-white">
+                                <span>Total</span>
+                                <span className="font-mono">${formatMoney(costs.total)}/mo</span>
+                              </div>
+                            </div>
+                            <p className="mt-2 text-xs text-zinc-600">
+                              e.g. {sample.years[1] >= currentYear ? "New" : ""} {sample.make} {sample.model}
+                            </p>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Car Finder */}
+            <div className="rounded-xl border border-zinc-800 bg-[#151a22]">
+              <button
+                type="button"
+                onClick={() => setFinderOpen(!finderOpen)}
+                className="flex w-full items-center justify-between px-5 py-4 text-left"
+              >
+                <div>
+                  <h3 className="text-base font-semibold text-white">Find cars in your budget</h3>
+                  <p className="mt-0.5 text-sm text-zinc-500">
+                    Browse {CARS.length}+ models — filter by brand, type, new/used, and more
+                  </p>
+                </div>
+                <span className="text-lg text-zinc-500">{finderOpen ? "▾" : "▸"}</span>
+              </button>
+
+              {finderOpen && (
+                <div className="border-t border-zinc-800 px-5 py-5">
+                  {/* Tier selector */}
+                  <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <span className="text-sm text-zinc-400">Shopping in:</span>
+                    {carTiers.map((tier, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setFinderTier(idx)}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
+                          finderTier === idx
+                            ? "text-white"
+                            : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                        }`}
+                        style={finderTier === idx ? { backgroundColor: tier.color + "30", color: tier.color, border: `1px solid ${tier.color}50` } : {}}
+                      >
+                        {tier.label} (up to ${formatMoney(tier.maxCarPrice)})
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Filters */}
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500">Brand</label>
+                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderMake} onChange={(e) => setFinderMake(e.target.value)}>
+                        <option value="any">All brands</option>
+                        {allMakes.map((m) => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500">Type</label>
+                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderType} onChange={(e) => setFinderType(e.target.value as CarType | "any")}>
+                        <option value="any">All types</option>
+                        {CAR_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500">Condition</label>
+                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderCondition} onChange={(e) => setFinderCondition(e.target.value as "new" | "used" | "any")}>
+                        <option value="any">New &amp; Used</option>
+                        <option value="new">New only</option>
+                        <option value="used">Used only</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500">Fuel type</label>
+                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderFuel} onChange={(e) => setFinderFuel(e.target.value as FuelType | "any")}>
+                        <option value="any">All fuel types</option>
+                        <option value="gas">Gas</option>
+                        <option value="hybrid">Hybrid</option>
+                        <option value="electric">Electric</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500">ZIP code</label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="postal-code"
+                        maxLength={5}
+                        className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                        value={finderZipStr}
+                        onChange={(e) =>
+                          setFinderZipStr(e.target.value.replace(/\D/g, "").slice(0, 5))
+                        }
+                        placeholder="90210"
+                      />
+                      <p className="mt-1 text-[11px] text-zinc-600">Local inventory on dealer sites</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500">Year range</label>
+                      <div className="mt-1 flex gap-1">
+                        <input type="number" className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderMinYear} onChange={(e) => setFinderMinYear(Number(e.target.value) || 2010)} min={2010} max={2026} />
+                        <span className="self-center text-zinc-500">–</span>
+                        <input type="number" className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderMaxYear} onChange={(e) => setFinderMaxYear(Number(e.target.value) || 2026)} min={2010} max={2026} />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500">Max mileage (used)</label>
+                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderMaxMileage} onChange={(e) => setFinderMaxMileage(Number(e.target.value))}>
+                        <option value={30000}>30,000 mi</option>
+                        <option value={50000}>50,000 mi</option>
+                        <option value={80000}>80,000 mi</option>
+                        <option value={100000}>100,000 mi</option>
+                        <option value={150000}>150,000 mi</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-zinc-500">Sort by</label>
+                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderSort} onChange={(e) => setFinderSort(e.target.value as "monthly" | "price" | "mileage" | "mpg")}>
+                        <option value="monthly">Monthly cost (low to high)</option>
+                        <option value="price">Price (low to high)</option>
+                        <option value="mileage">Mileage (low to high)</option>
+                        <option value="mpg">MPG (high to low)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Results */}
+                  <div className="mt-5">
+                    <p className="text-sm text-zinc-400">{finderResults.length} vehicles found</p>
+                    {finderResults.length > 0 && (
+                      <p className="mt-2 text-xs leading-relaxed text-zinc-500">
+                        Each card opens <span className="text-zinc-400">one</span> marketplace with a targeted search (year,
+                        make/model, body style, fuel, price and mileage near this row&apos;s estimate, ZIP{" "}
+                        <span className="font-mono text-zinc-400">
+                          {finderZipStr.length === 5 ? finderZipStr : "90210"}
+                        </span>
+                        ). The site rotates by vehicle so every link stays as specific as possible—we don&apos;t receive
+                        listing feeds, only search URLs.
+                      </p>
+                    )}
+                    {finderResults.length === 0 ? (
+                      <p className="mt-4 text-center text-sm text-zinc-500">No vehicles match your filters and budget. Try broadening your search.</p>
+                    ) : (
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {finderResults.map((r, i) => {
+                          const typeLabel = r.car.types.map((t) => CAR_TYPES.find((ct) => ct.value === t)?.label ?? t).join(" / ");
+                          const tier = carTiers[finderTier];
+                          const tierMax = tier?.maxCarPrice ?? r.price;
+                          const dealerSite = pickMarketplaceForListing(r.car.id, r.year);
+                          const dealerLink = buildSingleMarketplaceSearchLink(dealerSite, {
+                            make: r.car.make,
+                            model: r.car.model,
+                            year: r.year,
+                            zip: finderZipStr,
+                            maxPrice: tierMax,
+                            finderMaxMileageCap: finderMaxMileage,
+                            listingMileage: r.isUsed ? r.mileage : null,
+                            rowIsUsed: r.isUsed,
+                            fuel: r.car.fuel,
+                            primaryBodyType: r.car.types[0] ?? "sedan",
+                            estimatedListPrice: r.price,
+                          });
+                          const priceBand = listingPriceSearchBand(r.price, tierMax);
+                          const mileBand: MileageSearchBand | null = r.isUsed
+                            ? mileageSearchWindow(r.mileage, finderMaxMileage)
+                            : null;
+                          let mileBandLabel = "";
+                          if (mileBand) {
+                            if (mileBand.tag === "range") {
+                              mileBandLabel = ` · ~${formatMoney(mileBand.minMileage)}–${formatMoney(mileBand.maxMileage)} mi`;
+                            } else {
+                              mileBandLabel = ` · up to ${formatMoney(mileBand.maxMileage)} mi`;
+                            }
+                          }
+                          return (
+                            <div
+                              key={`${r.car.id}-${r.year}-${i}`}
+                              className="flex flex-col rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <p className="text-sm font-semibold text-white">{r.car.make} {r.car.model}</p>
+                                  <p className="mt-0.5 text-xs text-zinc-500">{r.year} · {typeLabel}{r.isUsed && r.mileage !== null ? ` · ${formatMoney(r.mileage)} mi` : ""}</p>
+                                </div>
+                                <div className="flex shrink-0 gap-1">
+                                  {r.car.fuel !== "gas" && (
+                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${r.car.fuel === "electric" ? "bg-purple-500/20 text-purple-400" : "bg-teal-500/20 text-teal-400"}`}>
+                                      {r.car.fuel === "electric" ? "EV" : "Hybrid"}
+                                    </span>
+                                  )}
+                                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${r.isUsed ? "bg-amber-500/20 text-amber-400" : "bg-green-500/20 text-green-400"}`}>
+                                    {r.isUsed ? "Used" : "New"}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="mt-3 font-mono text-lg font-semibold text-white">${formatMoney(r.price)}</p>
+                              <div className="mt-2 flex items-baseline justify-between text-xs">
+                                <span className="text-zinc-400">Est. total monthly</span>
+                                <span className="font-mono font-medium text-blue-400">${formatMoney(r.monthlyTotal)}/mo</span>
+                              </div>
+                              <div className="mt-1 flex items-baseline justify-between text-xs">
+                                <span className="text-zinc-500">{r.car.types.includes("ev") ? "MPGe" : "MPG"}</span>
+                                <span className="font-mono text-zinc-400">{r.car.mpg}</span>
+                              </div>
+                              <div className="mt-3 border-t border-zinc-800 pt-3">
+                                <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                                  Shop live listings
+                                </p>
+                                <a
+                                  href={dealerLink.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex w-full flex-col items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-3 text-center text-xs font-semibold leading-snug text-blue-400 transition hover:border-zinc-500 hover:bg-zinc-800 hover:text-blue-300"
+                                >
+                                  <span>Open on {dealerLink.label}</span>
+                                  <span className="mt-1 text-[10px] font-normal text-zinc-500">
+                                    ~${formatMoney(priceBand.min)}–${formatMoney(priceBand.max)}
+                                    {mileBandLabel}
+                                    {" · "}
+                                    {CAR_TYPES.find((ct) => ct.value === (r.car.types[0] ?? "sedan"))?.label ?? "vehicle"}
+                                    {r.car.fuel !== "gas"
+                                      ? ` · ${r.car.fuel === "electric" ? "Electric" : "Hybrid"}`
+                                      : ""}
+                                  </span>
+                                </a>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Peer marketplaces (Craigslist / Facebook) — opt-in */}
+            <div className="mt-6 rounded-xl border border-amber-900/40 bg-[#151a22]">
+              <div className="border-b border-amber-900/30 px-5 py-4">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-600 bg-zinc-900 text-amber-500 focus:ring-amber-500/40"
+                    checked={showPeerMarketplaces}
+                    onChange={(e) => setShowPeerMarketplaces(e.target.checked)}
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-amber-200/95">
+                      Show peer-to-peer search links (Craigslist &amp; Facebook Marketplace)
+                    </span>
+                    <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
+                      Private-party listings are unverified. Meet safely, confirm price and title/VIN before paying.
+                      Facebook does not support min-price filters in the URL—ignore unrealistic prices.
+                    </span>
+                  </span>
+                </label>
+              </div>
+
+              {showPeerMarketplaces && (
+                <div className="px-5 py-5">
+                  <div className="max-w-md">
+                    <label className="block text-xs font-medium text-zinc-500">Craigslist region</label>
+                    <select
+                      className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-amber-600/60"
+                      value={peerCraigslistSite}
+                      onChange={(e) => setPeerCraigslistSite(e.target.value)}
+                    >
+                      {CRAIGSLIST_SITE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label} ({o.value}.craigslist.org)
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-[11px] text-zinc-600">
+                      Defaults from your ZIP when you enable this section; change if you shop outside that area.
+                      Craigslist search uses min/max price to reduce obvious $1 / $999 bait.
+                    </p>
+                  </div>
+
+                  {finderResults.length === 0 ? (
+                    <p className="mt-6 text-center text-sm text-zinc-500">
+                      Use the finder above with results first—peer links use the same filters and tier cap.
+                    </p>
+                  ) : (
+                    <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {finderResults.map((r, i) => {
+                        const typeLabel = r.car.types
+                          .map((t) => CAR_TYPES.find((ct) => ct.value === t)?.label ?? t)
+                          .join(" / ");
+                        const tier = carTiers[finderTier];
+                        const tierMax = tier?.maxCarPrice ?? r.price;
+                        const peerWhich = pickPeerMarketplace(r.car.id, r.year);
+                        const peerLink =
+                          r.isUsed
+                            ? buildPeerMarketplaceSingleLink(peerWhich, {
+                                make: r.car.make,
+                                model: r.car.model,
+                                year: r.year,
+                                maxPrice: tierMax,
+                                craigslistSubdomain: peerCraigslistSite,
+                                rowIsUsed: r.isUsed,
+                                fuel: r.car.fuel,
+                                primaryBodyType: r.car.types[0] ?? "sedan",
+                                estimatedListPrice: r.price,
+                                listingMileage: r.mileage,
+                                finderMaxMileageCap: finderMaxMileage,
+                              })
+                            : null;
+                        return (
+                          <div
+                            key={`peer-${r.car.id}-${r.year}-${i}`}
+                            className="flex flex-col rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <p className="text-sm font-semibold text-white">
+                                  {r.car.make} {r.car.model}
+                                </p>
+                                <p className="mt-0.5 text-xs text-zinc-500">
+                                  {r.year} · {typeLabel}
+                                  {r.isUsed && r.mileage !== null ? ` · ${formatMoney(r.mileage)} mi` : ""}
+                                </p>
+                              </div>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                                  r.isUsed ? "bg-amber-500/20 text-amber-400" : "bg-zinc-600/40 text-zinc-400"
+                                }`}
+                              >
+                                {r.isUsed ? "Used" : "New"}
+                              </span>
+                            </div>
+                            {!peerLink ? (
+                              <p className="mt-3 text-xs leading-relaxed text-zinc-500">
+                                Peer listings are almost always <span className="text-zinc-400">used</span>. Use dealer
+                                links above for new cars, or include used vehicles in the finder.
+                              </p>
+                            ) : (
+                              <div className="mt-3 border-t border-zinc-800 pt-3">
+                                <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                                  Peer search (filtered)
+                                </p>
+                                <a
+                                  href={peerLink.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex w-full flex-col items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-3 text-center text-xs font-semibold leading-snug text-amber-400/95 transition hover:border-amber-700/50 hover:bg-zinc-800 hover:text-amber-300"
+                                >
+                                  <span>Open on {peerLink.label}</span>
+                                  <span className="mt-1 text-[10px] font-normal text-zinc-500">
+                                    One peer site per vehicle (Craigslist or Facebook) with price + keyword filters where
+                                    supported.
+                                  </span>
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </section>
         )}

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { FlowsCompareChart } from "@/components/FlowsCompareChart";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type FlowDirection = "inflow" | "outflow" | "neutral";
 
@@ -30,11 +31,17 @@ const CATEGORIES = [
 
 const HEATMAP_IMPORTANCE: Record<string, number> = {
   gold: 4, silver: 2, platinum: 1.5, palladium: 1, copper: 2,
+  aluminum: 1.5, zinc: 1, nickel: 1, lithium: 1.5, uranium: 1.5,
   oil: 3, brent: 2.5, natgas: 2, wheat: 1, corn: 1, soybeans: 1, coffee: 1.5,
+  sugar: 1, cotton: 1, lumber: 1,
   btc: 5, eth: 4, sol: 2.5, xrp: 2, bnb: 2, ada: 1.5,
+  doge: 1.5, avax: 1.5, dot: 1.5, link: 1.5,
   sp500: 5, nasdaq: 5, djia: 4, russell: 2, nikkei: 3, ftse: 2.5, kospi: 2,
+  dax: 2.5, hangseng: 3, shanghai: 3,
   vix: 2, vvix: 1, move: 1.5, skew: 1, gvz: 1,
+  ovx: 1, tyvix: 1, vxn: 1, rvx: 1, vxd: 1,
   eur: 3, jpy: 3, gbp: 2.5, krw: 2, cny: 2.5, usd: 3,
+  chf: 2, aud: 2, cad: 2, inr: 1.5,
 };
 
 function formatPrice(a: FlowAsset): string {
@@ -91,6 +98,8 @@ export default function FlowsPage() {
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("All");
   const [animationsStarted, setAnimationsStarted] = useState(false);
+  const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
+  const [compareSortKey, setCompareSortKey] = useState<"1d" | "1w" | "1m" | "ytd">("1m");
 
   useEffect(() => {
     let cancelled = false;
@@ -167,6 +176,48 @@ export default function FlowsPage() {
     };
   }, [filtered]);
 
+  const toggleCompare = useCallback((id: string) => {
+    setCompareIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const removeFromCompare = useCallback((id: string) => {
+    setCompareIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const clearCompare = useCallback(() => setCompareIds(new Set()), []);
+
+  const compareAssets = useMemo(() => {
+    const items = assets.filter((a) => compareIds.has(a.id));
+    const key = compareSortKey;
+    return items.sort((a, b) => {
+      const av = key === "1d" ? a.change1d : key === "1w" ? a.change1w : key === "1m" ? a.change1m : a.changeYtd;
+      const bv = key === "1d" ? b.change1d : key === "1w" ? b.change1w : key === "1m" ? b.change1m : b.changeYtd;
+      return bv - av;
+    });
+  }, [assets, compareIds, compareSortKey]);
+
+  const bestWorst = useMemo(() => {
+    if (compareAssets.length < 2) return null;
+    const get = (key: "change1d" | "change1w" | "change1m" | "changeYtd") => {
+      let best = compareAssets[0], worst = compareAssets[0];
+      for (const a of compareAssets) {
+        if (a[key] > best[key]) best = a;
+        if (a[key] < worst[key]) worst = a;
+      }
+      return { best, worst };
+    };
+    return { d1: get("change1d"), w1: get("change1w"), m1: get("change1m"), ytd: get("changeYtd") };
+  }, [compareAssets]);
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <style>{`
@@ -234,8 +285,7 @@ export default function FlowsPage() {
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
           Track where money moves across metals, commodities, crypto, indices,
-          and macro indicators—using static snapshot prices for stable,
-          rate-limit-free viewing.
+          and macro indicators. Select assets to compare performance side by side.
         </p>
       </header>
 
@@ -266,46 +316,226 @@ export default function FlowsPage() {
       {!loading && !error && (
         <>
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {filtered.map((a) => (
-              <li
-                key={a.id}
-                className="flex flex-col rounded-2xl border border-zinc-800 p-4"
-                style={{ backgroundColor: "var(--card)" }}
-              >
-                <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                  {a.category}
-                </span>
-                <h2 className="mt-1 text-base font-semibold text-white">
-                  {a.name}
-                </h2>
-                <p className="mt-3 text-2xl font-bold tabular-nums tracking-tight text-white">
-                  {formatPrice(a)}
-                </p>
-                <p className="mt-1 text-xs tabular-nums text-zinc-500">
-                  {a.marketCap ?? "—"}
-                </p>
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  {(
-                    [
-                      ["1D", a.change1d],
-                      ["1W", a.change1w],
-                      ["1M", a.change1m],
-                      ["YTD", a.changeYtd],
-                    ] as const
-                  ).map(([label, v]) => (
-                    <span
-                      key={label}
-                      className={`rounded-lg px-2 py-1 text-center text-xs font-semibold tabular-nums ring-1 ${pctClass(v)}`}
-                    >
-                      {label}{" "}
-                      {v > 0 ? "+" : ""}
-                      {v.toFixed(1)}%
-                    </span>
-                  ))}
-                </div>
-              </li>
-            ))}
+            {filtered.map((a) => {
+              const checked = compareIds.has(a.id);
+              return (
+                <li
+                  key={a.id}
+                  className={`relative flex flex-col rounded-2xl border p-4 transition-colors ${
+                    checked
+                      ? "border-blue-500/60 ring-1 ring-blue-500/30"
+                      : "border-zinc-800"
+                  }`}
+                  style={{ backgroundColor: "var(--card)" }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleCompare(a.id)}
+                    className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded border text-xs transition ${
+                      checked
+                        ? "border-blue-500 bg-blue-500 text-white"
+                        : "border-zinc-600 bg-zinc-800/60 text-transparent hover:border-zinc-400"
+                    }`}
+                    title={checked ? "Remove from comparison" : "Add to comparison"}
+                  >
+                    {checked && "✓"}
+                  </button>
+                  <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                    {a.category}
+                  </span>
+                  <h2 className="mt-1 text-base font-semibold text-white">
+                    {a.name}
+                  </h2>
+                  <p className="mt-3 text-2xl font-bold tabular-nums tracking-tight text-white">
+                    {formatPrice(a)}
+                  </p>
+                  <p className="mt-1 text-xs tabular-nums text-zinc-500">
+                    {a.marketCap ?? "—"}
+                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {(
+                      [
+                        ["1D", a.change1d],
+                        ["1W", a.change1w],
+                        ["1M", a.change1m],
+                        ["YTD", a.changeYtd],
+                      ] as const
+                    ).map(([label, v]) => (
+                      <span
+                        key={label}
+                        className={`rounded-lg px-2 py-1 text-center text-xs font-semibold tabular-nums ring-1 ${pctClass(v)}`}
+                      >
+                        {label}{" "}
+                        {v > 0 ? "+" : ""}
+                        {v.toFixed(1)}%
+                      </span>
+                    ))}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
+
+          {compareIds.size > 0 && (
+            <section
+              className="mt-12 rounded-2xl border border-blue-500/25 p-5 sm:p-6"
+              style={{ backgroundColor: "var(--card)" }}
+              aria-label="Performance comparison"
+            >
+              <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">
+                    Performance comparison
+                  </h2>
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {compareAssets.length} asset{compareAssets.length !== 1 ? "s" : ""} selected — table sorted by{" "}
+                    {compareSortKey.toUpperCase()} change
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex gap-1 rounded-lg border border-zinc-700 p-0.5">
+                    {(["1d", "1w", "1m", "ytd"] as const).map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setCompareSortKey(k)}
+                        className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                          compareSortKey === k
+                            ? "bg-zinc-100 text-zinc-900"
+                            : "text-zinc-400 hover:text-zinc-200"
+                        }`}
+                      >
+                        {k.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearCompare}
+                    className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 transition hover:border-zinc-500 hover:text-white"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              </div>
+
+              {compareAssets.length > 0 && (
+                <div className="mb-6">
+                  <FlowsCompareChart
+                    key={compareAssets.map((a) => a.id).sort().join(",")}
+                    assets={compareAssets.map((a) => ({
+                      id: a.id,
+                      name: a.name,
+                      symbol: a.symbol,
+                    }))}
+                  />
+                </div>
+              )}
+
+              {compareAssets.length === 0 && (
+                <p className="mb-6 text-sm text-zinc-500">
+                  Loading selected assets…
+                </p>
+              )}
+
+              {compareAssets.length > 0 && (
+                <>
+                  {bestWorst && (
+                    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {(
+                        [
+                          ["1D", bestWorst.d1],
+                          ["1W", bestWorst.w1],
+                          ["1M", bestWorst.m1],
+                          ["YTD", bestWorst.ytd],
+                        ] as [string, { best: FlowAsset; worst: FlowAsset }][]
+                      ).map(([label, { best, worst }]) => (
+                        <div
+                          key={label}
+                          className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3"
+                        >
+                          <div className="text-xs font-medium text-zinc-500">{label} Leader</div>
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <span className="text-sm font-semibold text-emerald-400">{best.name}</span>
+                            <span className="text-xs tabular-nums text-emerald-300">
+                              {best[`change${label === "1D" ? "1d" : label === "1W" ? "1w" : label === "1M" ? "1m" : "Ytd"}` as keyof FlowAsset] as number > 0 ? "+" : ""}
+                              {(best[`change${label === "1D" ? "1d" : label === "1W" ? "1w" : label === "1M" ? "1m" : "Ytd"}` as keyof FlowAsset] as number).toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <span className="text-sm font-semibold text-red-400">{worst.name}</span>
+                            <span className="text-xs tabular-nums text-red-300">
+                              {(worst[`change${label === "1D" ? "1d" : label === "1W" ? "1w" : label === "1M" ? "1m" : "Ytd"}` as keyof FlowAsset] as number).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="border-b border-zinc-800 text-left">
+                          <th className="whitespace-nowrap py-2 pr-4 text-xs font-medium text-zinc-500">#</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-xs font-medium text-zinc-500">Asset</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-xs font-medium text-zinc-500">Category</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">Price</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">Mkt Cap</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">1D</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">1W</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">1M</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">YTD</th>
+                          <th className="py-2 text-center text-xs font-medium text-zinc-500">Remove</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {compareAssets.map((a, i) => (
+                          <tr
+                            key={a.id}
+                            className="border-b border-zinc-800/50 transition hover:bg-zinc-800/30"
+                          >
+                            <td className="py-2.5 pr-4 tabular-nums text-zinc-500">{i + 1}</td>
+                            <td className="py-2.5 pr-4 font-semibold text-white">{a.name}</td>
+                            <td className="py-2.5 pr-4 text-xs text-zinc-500">{a.category}</td>
+                            <td className="py-2.5 pr-4 text-right tabular-nums text-zinc-300">
+                              {formatPrice(a)}
+                            </td>
+                            <td className="py-2.5 pr-4 text-right text-xs tabular-nums text-zinc-500">
+                              {a.marketCap}
+                            </td>
+                            {(
+                              [a.change1d, a.change1w, a.change1m, a.changeYtd] as number[]
+                            ).map((v, j) => (
+                              <td
+                                key={j}
+                                className={`py-2.5 pr-4 text-right tabular-nums font-medium ${
+                                  v > 0 ? "text-emerald-400" : v < 0 ? "text-red-400" : "text-zinc-500"
+                                }`}
+                              >
+                                {v > 0 ? "+" : ""}
+                                {v.toFixed(1)}%
+                              </td>
+                            ))}
+                            <td className="py-2.5 text-center">
+                              <button
+                                type="button"
+                                onClick={() => removeFromCompare(a.id)}
+                                className="text-zinc-600 transition hover:text-red-400"
+                                title="Remove"
+                              >
+                                ✕
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </section>
+          )}
 
           <section className="mt-12">
             <h2 className="text-lg font-semibold text-white">

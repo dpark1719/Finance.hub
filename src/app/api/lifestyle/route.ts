@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CITIES, computeBudget } from "@/lib/lifestyle-data";
+import { computeBudget, findLifestyleCityById, LIFESTYLE_CORE_CITIES } from "@/lib/lifestyle-data";
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "city and income are required" }, { status: 400 });
   }
 
-  const city = CITIES.find((c) => c.id === cityId);
+  const city = findLifestyleCityById(cityId);
   if (!city) {
     return NextResponse.json({ error: `Unknown city: ${cityId}` }, { status: 400 });
   }
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   const budget = computeBudget(city, income, household);
 
-  const allOthers = CITIES
+  const allOthers = LIFESTYLE_CORE_CITIES
     .filter((c) => c.id !== cityId)
     .map((c) => {
       const b = computeBudget(c, income, household);

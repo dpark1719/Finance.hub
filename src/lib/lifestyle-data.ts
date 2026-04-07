@@ -4,30 +4,32 @@
  * BEA Regional Price Parities, BLS Consumer Expenditure Survey.
  */
 
+import type { CityData } from "./lifestyle-types";
+import { COL_EXTREME_LIFESTYLE_CITIES } from "./lifestyle-col-extremes";
+import { GENERATED_LIFESTYLE_CITIES } from "./lifestyle-generated-cities";
+
+export type { CityData } from "./lifestyle-types";
+
 /* ── City data ────────────────────────────────────────────────── */
 
-export interface CityData {
-  id: string;
-  name: string;
-  state: string;
-  stateCode: string;
-  /** ISO 2-letter country code */
-  country: string;
-  /** Monthly rent by bedroom count [studio, 1BR, 2BR, 3BR, 4BR] in USD */
-  fmr: [number, number, number, number, number];
-  /** Cost-of-living index relative to US national avg (100) */
-  rpp: number;
-  /** Combined sales / VAT tax rate (%) */
-  salesTax: number;
-  /** City-level income tax rate (%) — most cities = 0 */
-  localIncomeTax: number;
-}
-
-export const CITIES: CityData[] = [
+/** Hand-tuned metros — also used as the comparison pool for the lifestyle API (see route). */
+export const LIFESTYLE_CORE_CITIES: CityData[] = [
   // ── United States ──
   { id: "nyc", name: "New York City", state: "New York", stateCode: "NY", country: "US", fmr: [1901, 1945, 2217, 2780, 3066], rpp: 122.3, salesTax: 8.875, localIncomeTax: 3.876 },
   { id: "la", name: "Los Angeles", state: "California", stateCode: "CA", country: "US", fmr: [1578, 1830, 2326, 3170, 3463], rpp: 116.0, salesTax: 9.5, localIncomeTax: 0 },
-  { id: "chicago", name: "Chicago", state: "Illinois", stateCode: "IL", country: "US", fmr: [1011, 1115, 1308, 1694, 1852], rpp: 105.2, salesTax: 10.25, localIncomeTax: 0 },
+  {
+    id: "chicago",
+    name: "Chicago",
+    state: "Illinois",
+    stateCode: "IL",
+    country: "US",
+    fmr: [1011, 1115, 1308, 1694, 1852],
+    rpp: 105.2,
+    salesTax: 10.25,
+    localIncomeTax: 0,
+    rentAreaNote:
+      "HUD FY2026 Fair Market Rent for the Chicago-Naperville-Elgin, IL-IN-WI metropolitan area (the full CBSA, not the city limits alone). HUD uses a metro-wide rent distribution—often around the 40th percentile—so it blends pricier neighborhoods with cheaper suburbs and smaller cities in the region. A 1 BR near this benchmark is more commonly found toward Rogers Park, Albany Park, Bridgeport, Avondale, south/west sides, or collar suburbs; Loop, River North, Streeterville, and Lincoln Park typically ask well above this for comparable units.",
+  },
   { id: "houston", name: "Houston", state: "Texas", stateCode: "TX", country: "US", fmr: [939, 1057, 1282, 1719, 2010], rpp: 96.4, salesTax: 8.25, localIncomeTax: 0 },
   { id: "phoenix", name: "Phoenix", state: "Arizona", stateCode: "AZ", country: "US", fmr: [1004, 1126, 1353, 1830, 2100], rpp: 100.5, salesTax: 8.6, localIncomeTax: 0 },
   { id: "philly", name: "Philadelphia", state: "Pennsylvania", stateCode: "PA", country: "US", fmr: [1027, 1098, 1313, 1660, 1893], rpp: 106.4, salesTax: 8.0, localIncomeTax: 3.75 },
@@ -37,6 +39,19 @@ export const CITIES: CityData[] = [
   { id: "san-jose", name: "San Jose", state: "California", stateCode: "CA", country: "US", fmr: [2007, 2521, 3155, 4185, 4572], rpp: 125.8, salesTax: 9.375, localIncomeTax: 0 },
   { id: "austin", name: "Austin", state: "Texas", stateCode: "TX", country: "US", fmr: [1100, 1298, 1578, 2070, 2415], rpp: 101.2, salesTax: 8.25, localIncomeTax: 0 },
   { id: "sf", name: "San Francisco", state: "California", stateCode: "CA", country: "US", fmr: [2118, 2658, 3403, 4478, 4944], rpp: 127.4, salesTax: 8.625, localIncomeTax: 0 },
+  {
+    id: "atherton-ca",
+    name: "Atherton",
+    state: "California",
+    stateCode: "CA",
+    country: "US",
+    fmr: [2118, 2658, 3403, 4478, 4944],
+    rpp: 129.0,
+    salesTax: 9.375,
+    localIncomeTax: 0,
+    rentAreaNote:
+      "HUD FY2026 Fair Market Rent for the San Francisco-Oakland-Hayward, CA metropolitan area (San Mateo County). The benchmark is metro-wide; Atherton’s market rents are often materially above this FMR.",
+  },
   { id: "seattle", name: "Seattle", state: "Washington", stateCode: "WA", country: "US", fmr: [1484, 1737, 2091, 2802, 3235], rpp: 115.0, salesTax: 10.25, localIncomeTax: 0 },
   { id: "denver", name: "Denver", state: "Colorado", stateCode: "CO", country: "US", fmr: [1195, 1384, 1692, 2286, 2617], rpp: 108.5, salesTax: 8.81, localIncomeTax: 0 },
   { id: "dc", name: "Washington DC", state: "District of Columbia", stateCode: "DC", country: "US", fmr: [1592, 1700, 2013, 2531, 2882], rpp: 117.0, salesTax: 6.0, localIncomeTax: 0 },
@@ -211,6 +226,38 @@ export const CITIES: CityData[] = [
   { id: "calgary", name: "Calgary", state: "", stateCode: "", country: "CA", fmr: [1100, 1450, 1900, 2500, 3100], rpp: 100, salesTax: 5, localIncomeTax: 0 },
   { id: "ottawa", name: "Ottawa", state: "", stateCode: "", country: "CA", fmr: [1050, 1400, 1800, 2350, 2950], rpp: 98, salesTax: 13, localIncomeTax: 0 },
 ];
+
+function lifestyleDedupeKey(c: CityData): string {
+  const n = c.name.toLowerCase().replace(/\s+city$/i, "").trim();
+  return c.country === "US" ? `${c.stateCode}|${n}` : `${c.country}|${n}`;
+}
+
+const _coreDedupeKeys = new Set(LIFESTYLE_CORE_CITIES.map(lifestyleDedupeKey));
+
+const _coreAndGenerated: CityData[] = [
+  ...LIFESTYLE_CORE_CITIES,
+  ...GENERATED_LIFESTYLE_CITIES.filter((g) => !_coreDedupeKeys.has(lifestyleDedupeKey(g))),
+];
+
+const _priorKeys = new Set(_coreAndGenerated.map(lifestyleDedupeKey));
+
+/** Core + GeoNames-generated + Numbeo top/bottom 100 (expensive / least expensive) global cities. */
+export const CITIES: CityData[] = [
+  ..._coreAndGenerated,
+  ...COL_EXTREME_LIFESTYLE_CITIES.filter((c) => !_priorKeys.has(lifestyleDedupeKey(c))),
+];
+
+/**
+ * Resolve a city by id for the lifestyle API. Numbeo “extreme” rows share a dedupe key with
+ * core/generated cities (e.g. Zurich) and are omitted from `CITIES`, but their ids still exist
+ * in `COL_EXTREME_LIFESTYLE_CITIES` — this function finds those too.
+ */
+export function findLifestyleCityById(id: string): CityData | undefined {
+  return (
+    CITIES.find((c) => c.id === id) ??
+    COL_EXTREME_LIFESTYLE_CITIES.find((c) => c.id === id)
+  );
+}
 
 /* ── Income dropdown levels ───────────────────────────────────── */
 

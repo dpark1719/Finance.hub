@@ -57,6 +57,12 @@ const CPP_BY_CURRENCY: Record<string, number> = {
   CAPITAL_ONE: 1.0,
   VENTURE: 1.0,
   CASH_BACK: 1.0,
+  USD: 1.0,
+  BANK_OF_AMERICA: 1.0,
+  PENFED: 1.0,
+  WELLS_FARGO: 1.0,
+  BARCLAYS: 1.0,
+  BREX: 1.0,
 };
 
 function centsPerPoint(currency: string): number {
@@ -103,7 +109,9 @@ function formatCurrencyLabel(currency: string): string {
 }
 
 function inferCashbackOrTravel(currency: string): CreditCardDto["cashbackOrTravel"] {
-  if (currency.toUpperCase().includes("CASH")) return "cashback";
+  const upper = currency.toUpperCase();
+  if (upper === "USD" || upper.includes("CASH")) return "cashback";
+  if (upper === "BANK_OF_AMERICA" || upper === "PENFED") return "cashback";
   return "travel";
 }
 

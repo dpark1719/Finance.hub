@@ -276,7 +276,8 @@ function fetchPairHistory(from: string, to: string, range: FxRange): Promise<FxR
 }
 
 export default function FxPage() {
-  const [amount, setAmount] = useState(1);
+  const [amountStr, setAmountStr] = useState("1");
+  const amount = Number(amountStr) || 0;
   const [from, setFrom] = useState("USD");
   const [to, setTo] = useState("JPY");
   const [result, setResult] = useState<FxResponse | null>(null);
@@ -512,8 +513,8 @@ export default function FxPage() {
               type="number"
               min={0}
               step="any"
-              value={Number.isNaN(amount) ? "" : amount}
-              onChange={(e) => setAmount(Number.parseFloat(e.target.value) || 0)}
+              value={amountStr}
+              onChange={(e) => setAmountStr(e.target.value)}
               className="mt-1 w-full max-w-xs rounded-lg border border-zinc-700 bg-[var(--card)] px-3 py-2 text-white outline-none ring-blue-500/0 transition focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30"
             />
           </div>

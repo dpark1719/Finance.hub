@@ -138,27 +138,52 @@ function fmtPrice(n: number): string {
   return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
 
+const DEFAULT_US_RENT_SCOPE =
+  "U.S. amounts use HUD Fair Market Rent where we have matched the city to a metro: a regional benchmark for the whole metropolitan statistical area (often near the 40th percentile of rents), not one neighborhood or a luxury building. Downtown and waterfront districts are usually above this; outer neighborhoods and many suburbs are often closer.";
+
 function buildRentDetail(city: CityData, rent: number, bedrooms: string): CategoryDetail {
   const nh = CITY_NEIGHBORHOODS[city.id];
   const rpp = city.rpp;
+  const br = bedrooms.toLowerCase();
   let description: string;
 
-  if (rpp >= 120) {
-    description = `At ${fmtPrice(rent)}/mo for a ${bedrooms.toLowerCase()}, expect a compact unit in an older building or walk-up. Newer builds and doorman buildings cost 20–40% more.`;
+  if (city.country === "US") {
+    description = `Budget line ${fmtPrice(rent)}/mo for a ${br} is tied to HUD’s metro-wide Fair Market Rent for this market—not a typical Loop or downtown high-rise listing. It’s meant as a regional planning benchmark (see “What this number represents” below).`;
+    if (rpp >= 120) {
+      description += ` In high-cost metros, listings in the urban core often run hundreds above this HUD figure for the same bedroom count.`;
+    } else if (rpp >= 105) {
+      description += ` Core city neighborhoods usually skew higher than the metro average; many listings closer to this range appear farther from the central business district.`;
+    } else {
+      description += ` In lower-cost markets, actual asking rents sometimes track closer to this benchmark across more of the city.`;
+    }
+  } else if (rpp >= 120) {
+    description = `At ${fmtPrice(rent)}/mo for a ${br}, expect a compact unit in an older building or walk-up. Newer builds and doorman buildings cost 20–40% more.`;
   } else if (rpp >= 105) {
-    description = `At ${fmtPrice(rent)}/mo for a ${bedrooms.toLowerCase()}, you'll find a standard apartment with in-unit laundry in many areas. Central neighborhoods run higher.`;
+    description = `At ${fmtPrice(rent)}/mo for a ${br}, you'll find a standard apartment with in-unit laundry in many areas. Central neighborhoods run higher.`;
   } else if (rpp >= 95) {
-    description = `At ${fmtPrice(rent)}/mo for a ${bedrooms.toLowerCase()}, you can get a well-sized apartment in good neighborhoods, often with parking included.`;
+    description = `At ${fmtPrice(rent)}/mo for a ${br}, you can get a well-sized apartment in good neighborhoods, often with parking included.`;
   } else {
-    description = `At ${fmtPrice(rent)}/mo for a ${bedrooms.toLowerCase()}, housing is affordable — spacious apartments or small houses available in central areas.`;
+    description = `At ${fmtPrice(rent)}/mo for a ${br}, housing is affordable — spacious apartments or small houses available in central areas.`;
   }
 
   const items: DetailItem[] = [];
 
+  if (city.country === "US") {
+    items.push({
+      label: "What this number represents",
+      price: "",
+      note: city.rentAreaNote ?? DEFAULT_US_RENT_SCOPE,
+    });
+  }
+
   if (nh) {
-    items.push({ label: "Budget-friendly areas", price: "", note: nh.affordable });
+    items.push({
+      label: "Budget-friendly areas (often closer to the HUD line)",
+      price: "",
+      note: nh.affordable,
+    });
     items.push({ label: "Mid-range neighborhoods", price: "", note: nh.mid });
-    items.push({ label: "Premium neighborhoods", price: "", note: nh.pricey });
+    items.push({ label: "Premium neighborhoods (usually above the HUD benchmark)", price: "", note: nh.pricey });
   }
 
   items.push({ label: "Broker / agent fee (if applicable)", price: rpp >= 115 ? "1–2 months' rent" : "Typically none" });
@@ -405,7 +430,7 @@ export default function LifestylePage() {
 
   const filteredCities = useMemo(() => {
     const q = cityQuery.toLowerCase().trim();
-    if (!q) return CITIES.slice(0, 50);
+    if (!q) return CITIES.slice(0, 100);
     return CITIES.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
@@ -414,7 +439,7 @@ export default function LifestylePage() {
         (COUNTRY_NAMES[c.country] ?? "").toLowerCase().includes(q) ||
         c.id.includes(q),
     );
-  }, [cityQuery]);
+  }, [cityQuery, CITIES]);
 
   const selectCity = useCallback((c: CityData) => {
     setSelectedCity(c);
@@ -519,7 +544,7 @@ export default function LifestylePage() {
               }}
               onFocus={() => setShowDropdown(true)}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-              placeholder="Search a city..."
+              placeholder={`Search ${CITIES.length.toLocaleString("en-US")} cities…`}
               className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-sm text-white outline-none ring-blue-500/30 placeholder:text-zinc-600 focus:border-blue-500/50 focus:ring-2"
             />
             {showDropdown && filteredCities.length > 0 && (
@@ -717,10 +742,12 @@ export default function LifestylePage() {
 
       <footer className="mt-16 border-t border-zinc-800 pt-8 text-xs text-zinc-600">
         <p>
-          Estimates only — not financial advice. US rents based on HUD FY2026
-          Fair Market Rents. International rents are approximate USD
-          equivalents. Tax brackets from Tax Foundation 2026 (US); international
-          taxes use a simplified ~30% effective rate. Actual costs vary.
+          Estimates only — not financial advice. U.S. rents use HUD FY2026 Fair
+          Market Rents for metropolitan areas (regional benchmarks, not one
+          neighborhood). Additional cities marked in Numbeo rankings use cost-of-living
+          index–scaled rents (see each city&apos;s rent note). International rents are
+          approximate USD equivalents. Tax brackets from Tax Foundation 2026 (US);
+          international taxes use a simplified ~30% effective rate. Actual costs vary.
         </p>
       </footer>
     </main>
