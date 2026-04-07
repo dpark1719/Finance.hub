@@ -78,7 +78,7 @@ export default function Home() {
     <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-zinc-800 pb-8">
         <p className="font-mono text-xs uppercase tracking-widest text-zinc-500">
-          Stock report card
+          P1: finance.hub · Stocks
         </p>
         <h1
           className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl"

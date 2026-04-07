@@ -196,7 +196,7 @@ export default function Home() {
           className="text-4xl font-semibold tracking-tight text-white sm:text-5xl"
           style={{ fontFamily: "var(--font-dm-sans), system-ui" }}
         >
-          Finance.Hub
+          P1: finance.hub
         </h1>
         <p className="mt-3 text-lg text-[var(--muted)]">
           Your personal finance command center
@@ -221,7 +221,7 @@ export default function Home() {
 
       <footer className="mt-16 border-t border-zinc-800 pt-8 text-center text-xs text-zinc-500 sm:text-left">
         <p>
-          Finance.Hub — tools for planning and learning. Not financial advice.
+          P1: finance.hub — tools for planning and learning. Not financial advice.
         </p>
       </footer>
     </main>
