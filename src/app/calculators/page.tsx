@@ -1,7 +1,7 @@
 "use client";
 
 import { useSupabaseUser } from "@/lib/hooks/useSupabaseUser";
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CARS,
   CAR_TYPES,
@@ -793,10 +793,7 @@ export default function CalculatorsPage() {
         {/* Compound */}
         {tab === "compound" && (
           <section className="mt-8 grid gap-8 lg:grid-cols-2 lg:items-start">
-            <div
-              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
-              style={{ ["--card" as string]: "#151a22" } as CSSProperties}
-            >
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Inputs</h2>
               <div className="mt-4 space-y-4">
                 <label className="block">
@@ -839,10 +836,7 @@ export default function CalculatorsPage() {
               </div>
             </div>
 
-            <div
-              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
-              style={{ ["--card" as string]: "#151a22" } as CSSProperties}
-            >
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Results</h2>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-1">
                 <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
@@ -857,7 +851,7 @@ export default function CalculatorsPage() {
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-slate-600 dark:text-zinc-400">Total interest earned</dt>
-                  <dd className="font-mono text-emerald-400">
+                  <dd className="font-mono text-emerald-700 dark:text-emerald-400">
                     ${formatMoney(compound.totalInterest)}
                   </dd>
                 </div>
@@ -868,7 +862,7 @@ export default function CalculatorsPage() {
                   <p className="text-sm text-slate-600 dark:text-zinc-400">Growth over time</p>
                   <svg
                     viewBox={`0 0 ${compoundChart.w} ${compoundChart.h}`}
-                    className="mt-2 h-auto w-full max-w-full"
+                    className="mt-2 h-auto w-full max-w-full text-slate-500 dark:text-zinc-400"
                     role="img"
                     aria-label="Balance and contributions by year"
                   >
@@ -891,7 +885,7 @@ export default function CalculatorsPage() {
                     />
                     <polyline
                       fill="none"
-                      stroke="rgb(161 161 170)"
+                      className="stroke-slate-400 dark:stroke-zinc-400"
                       strokeWidth="1.5"
                       strokeDasharray="4 3"
                       points={compoundChart.contribPts}
@@ -899,7 +893,7 @@ export default function CalculatorsPage() {
                     <text
                       x={compoundChart.pad.l}
                       y={compoundChart.h - 6}
-                      fill="rgb(161 161 170)"
+                      fill="currentColor"
                       fontSize="10"
                     >
                       0
@@ -907,7 +901,7 @@ export default function CalculatorsPage() {
                     <text
                       x={compoundChart.w - compoundChart.pad.r - 20}
                       y={compoundChart.h - 6}
-                      fill="rgb(161 161 170)"
+                      fill="currentColor"
                       fontSize="10"
                       textAnchor="end"
                     >
@@ -932,10 +926,7 @@ export default function CalculatorsPage() {
         {/* Mortgage */}
         {tab === "mortgage" && (
           <section className="mt-8 grid gap-8 lg:grid-cols-2 lg:items-start">
-            <div
-              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
-              style={{ ["--card" as string]: "#151a22" } as CSSProperties}
-            >
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Inputs</h2>
               <div className="mt-4 space-y-4">
                 <label className="block">
@@ -995,10 +986,7 @@ export default function CalculatorsPage() {
               </div>
             </div>
 
-            <div
-              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
-              style={{ ["--card" as string]: "#151a22" } as CSSProperties}
-            >
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Results</h2>
               <dl className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
@@ -1067,10 +1055,7 @@ export default function CalculatorsPage() {
         {/* FIRE */}
         {tab === "fire" && (
           <section className="mt-8 grid gap-8 lg:grid-cols-2 lg:items-start">
-            <div
-              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
-              style={{ ["--card" as string]: "#151a22" } as CSSProperties}
-            >
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Inputs</h2>
               <div className="mt-4 space-y-4">
                 <label className="block">
@@ -1129,10 +1114,7 @@ export default function CalculatorsPage() {
               </div>
             </div>
 
-            <div
-              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
-              style={{ ["--card" as string]: "#151a22" } as CSSProperties}
-            >
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Results</h2>
               <dl className="mt-4 space-y-3 text-sm">
                 <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
@@ -1157,7 +1139,7 @@ export default function CalculatorsPage() {
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-slate-600 dark:text-zinc-400">Projected portfolio at FIRE</dt>
-                  <dd className="font-mono text-emerald-400">
+                  <dd className="font-mono text-emerald-700 dark:text-emerald-400">
                     ${formatMoney(fire.projectedAtFire)}
                   </dd>
                 </div>
@@ -1194,10 +1176,7 @@ export default function CalculatorsPage() {
         {/* Debt */}
         {tab === "debt" && (
           <section className="mt-8 grid gap-8 lg:grid-cols-2 lg:items-start">
-            <div
-              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
-              style={{ ["--card" as string]: "#151a22" } as CSSProperties}
-            >
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Debts</h2>
               <div className="mt-4 space-y-4 overflow-x-auto">
                 <table className="w-full min-w-[320px] text-left text-sm">
@@ -1306,7 +1285,7 @@ export default function CalculatorsPage() {
                     },
                   ])
                 }
-                className="mt-4 rounded-lg bg-slate-200 dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-slate-800 dark:text-zinc-200 hover:bg-zinc-700"
+                className="mt-4 rounded-lg bg-slate-200 dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-slate-800 dark:text-zinc-200 hover:bg-slate-300 dark:hover:bg-zinc-700"
               >
                 Add debt
               </button>
@@ -1328,10 +1307,7 @@ export default function CalculatorsPage() {
               </label>
             </div>
 
-            <div
-              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
-              style={{ ["--card" as string]: "#151a22" } as CSSProperties}
-            >
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Avalanche vs snowball</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4">
@@ -1387,10 +1363,7 @@ export default function CalculatorsPage() {
           <section className="mt-8 space-y-8">
             <div className="grid gap-8 lg:grid-cols-[340px_1fr] lg:items-start">
               {/* Inputs */}
-              <div
-                className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
-                style={{ ["--card" as string]: "#151a22" } as CSSProperties}
-              >
+              <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6">
                 <h2 className="text-lg font-semibold">Your finances</h2>
                 <div className="mt-4 space-y-4">
                   <label className="block">
@@ -1444,7 +1417,9 @@ export default function CalculatorsPage() {
                         type="button"
                         onClick={() => { setFinderTier(idx); setFinderOpen(true); }}
                         className={`rounded-xl border p-5 text-left transition hover:border-slate-300 dark:border-zinc-600 ${
-                          finderOpen && finderTier === idx ? "border-blue-500/50 bg-blue-500/5" : "border-slate-200 dark:border-zinc-800 bg-[#151a22]"
+                          finderOpen && finderTier === idx
+                            ? "border-blue-500/50 bg-blue-500/5"
+                            : "border-slate-200 dark:border-zinc-800 bg-[var(--card)]"
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -1510,7 +1485,7 @@ export default function CalculatorsPage() {
             </div>
 
             {/* Car Finder */}
-            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[#151a22]">
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)]">
               <button
                 type="button"
                 onClick={() => setFinderOpen(!finderOpen)}
@@ -1738,8 +1713,8 @@ export default function CalculatorsPage() {
             </div>
 
             {/* Peer marketplaces (Craigslist / Facebook) — opt-in */}
-            <div className="mt-6 rounded-xl border border-amber-900/40 bg-[#151a22]">
-              <div className="border-b border-amber-900/30 px-5 py-4">
+            <div className="mt-6 rounded-xl border border-amber-300/80 bg-amber-50/90 dark:border-amber-900/40 dark:bg-[var(--card)]">
+              <div className="border-b border-amber-200 dark:border-amber-900/30 px-5 py-4">
                 <label className="flex cursor-pointer items-start gap-3">
                   <input
                     type="checkbox"
@@ -1748,7 +1723,7 @@ export default function CalculatorsPage() {
                     onChange={(e) => setShowPeerMarketplaces(e.target.checked)}
                   />
                   <span>
-                    <span className="block text-sm font-semibold text-amber-200/95">
+                    <span className="block text-sm font-semibold text-amber-950 dark:text-amber-200/95">
                       Show peer-to-peer search links (Craigslist &amp; Facebook Marketplace)
                     </span>
                     <span className="mt-1 block text-xs leading-relaxed text-slate-500 dark:text-zinc-500">
