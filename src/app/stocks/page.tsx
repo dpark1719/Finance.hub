@@ -3,7 +3,7 @@
 import type { LetterGrade, StockReport } from "@/types/report";
 import { WatchlistsPanel } from "@/components/WatchlistsPanel";
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 const StockPriceChart = dynamic(
   () =>
@@ -76,6 +76,14 @@ export default function Home() {
     [run],
   );
 
+  /** Symbol to add via Watchlist +: search box if non-empty, else last resolved report ticker. */
+  const watchTicker = useMemo(() => {
+    const qq = q.trim();
+    if (qq) return qq;
+    if (report?.symbol?.trim()) return report.symbol.trim();
+    return "";
+  }, [q, report?.symbol]);
+
   return (
     <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-slate-200 dark:border-zinc-800 pb-8">
@@ -123,8 +131,8 @@ export default function Home() {
           <button
             type="button"
             onClick={() => setWatchAddRequest((n) => n + 1)}
-            disabled={!q.trim()}
-            title="Adds the ticker in the search box to your active watchlist when signed in"
+            disabled={!watchTicker}
+            title="Adds the current ticker (search box, or last report below) to your active watchlist when signed in"
             className="touch-manipulation shrink-0 rounded-lg border border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-800 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Watchlist +
@@ -132,7 +140,7 @@ export default function Home() {
         </div>
       </header>
 
-      <WatchlistsPanel addRequest={watchAddRequest} tickerToAdd={q} />
+      <WatchlistsPanel addRequest={watchAddRequest} tickerToAdd={watchTicker} />
 
       <Sp500Heatmap onSelectSymbol={onHeatmapSymbol} />
 
