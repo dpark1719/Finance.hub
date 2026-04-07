@@ -25,7 +25,11 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  try {
+    await supabase.auth.getUser();
+  } catch {
+    // Bad cookies, network, or SDK edge cases should not take down every request.
+  }
 
   return supabaseResponse;
 }
