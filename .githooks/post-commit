@@ -1,0 +1,28 @@
+#!/bin/sh
+# After each commit, push the current branch to its upstream remote.
+# Enable once per clone: npm run setup:hooks
+# Disable: git config --unset core.hooksPath
+# Skip once: SKIP_AUTO_PUSH=1 git commit ...
+
+# Do not recurse if a hook or subprocess triggers another commit
+if [ -n "$GIT_AUTO_PUSH_DISABLED" ]; then
+  exit 0
+fi
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null) || exit 0
+remote=$(git config "branch.${branch}.remote" 2>/dev/null) || true
+if [ -z "$remote" ]; then
+  echo "[post-commit] No upstream remote for ${branch}; run: git push -u origin ${branch}"
+  exit 0
+fi
+
+if [ -n "$SKIP_AUTO_PUSH" ]; then
+  echo "[post-commit] SKIP_AUTO_PUSH set; not pushing."
+  exit 0
+fi
+
+echo "[post-commit] Pushing ${branch} → ${remote}…"
+GIT_AUTO_PUSH_DISABLED=1 git push "$remote" "$branch" || {
+  echo "[post-commit] Push failed (offline, auth, or conflict). Your commit is saved locally."
+  exit 0
+}

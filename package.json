@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "setup:hooks": "git config core.hooksPath .githooks",
     "dev": "next dev -p 3000",
     "dev:clean": "rm -rf .next && next dev -p 3000",
     "build": "next build",
