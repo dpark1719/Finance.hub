@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { AiAssistLauncher } from "@/components/AiAssistLauncher";
 import { ThemeInitScript } from "@/components/ThemeInitScript";
 import { NavBar } from "@/components/NavBar";
 import { DM_Sans, IBM_Plex_Mono } from "next/font/google";
@@ -52,6 +53,7 @@ export default function RootLayout({
         <div className="flex min-h-full min-w-0 flex-col">
           <NavBar />
           <div className="min-w-0 flex-1">{children}</div>
+          <AiAssistLauncher />
         </div>
       </body>
     </html>
