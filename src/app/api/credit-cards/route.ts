@@ -69,6 +69,15 @@ function centsPerPoint(currency: string): number {
   return CPP_BY_CURRENCY[currency] ?? 1.0;
 }
 
+/** Upstream uses USD `amount` as whole dollars; other currencies are points × cpp. */
+function estimatedBonusUsd(points: number, currencyRaw: string): number {
+  if (currencyRaw === "USD") {
+    return Math.round(points * 100) / 100;
+  }
+  const cpp = centsPerPoint(currencyRaw);
+  return Math.round(points * (cpp / 100) * 100) / 100;
+}
+
 /** e.g. AMERICAN_EXPRESS -> American Express, CHASE -> Chase */
 function formatIssuerOrNetwork(value: unknown): string {
   if (typeof value !== "string" || !value.trim()) return "Unknown";
@@ -117,14 +126,19 @@ function inferCashbackOrTravel(currency: string): CreditCardDto["cashbackOrTrave
 
 function buildBonusDescription(params: {
   points: number;
+  currencyRaw: string;
   currencyLabel: string;
   spend: number;
   months: number;
 }): string {
-  const pts = Math.round(params.points).toLocaleString("en-US");
   const spend = formatUsd(params.spend);
   const m = params.months;
   const monthWord = m === 1 ? "month" : "months";
+  if (params.currencyRaw === "USD") {
+    const cash = formatUsd(Math.round(params.points));
+    return `Earn ${cash} cash back after spending ${spend} in ${m} ${monthWord}`;
+  }
+  const pts = Math.round(params.points).toLocaleString("en-US");
   return `Earn ${pts} ${params.currencyLabel} points after spending ${spend} in ${m} ${monthWord}`;
 }
 
@@ -160,12 +174,12 @@ function transformCard(raw: RawCard, index: number): CreditCardDto {
 
   const currencyRaw =
     typeof raw.currency === "string" ? raw.currency.trim().toUpperCase() : "";
-  const cpp = centsPerPoint(currencyRaw);
-  const bonusValue = Math.round(points * (cpp / 100) * 100) / 100;
+  const bonusValue = estimatedBonusUsd(points, currencyRaw);
 
   const currencyLabel = currencyRaw ? formatCurrencyLabel(currencyRaw) : "Rewards";
   const bonusDescription = buildBonusDescription({
     points,
+    currencyRaw,
     currencyLabel,
     spend,
     months,
