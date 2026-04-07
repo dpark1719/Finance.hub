@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { AiAssistLauncher } from "@/components/AiAssistLauncher";
 import { ThemeInitScript } from "@/components/ThemeInitScript";
 import { NavBar } from "@/components/NavBar";
@@ -56,6 +57,7 @@ export default function RootLayout({
           <div className="min-w-0 flex-1">{children}</div>
         </div>
         <AiAssistLauncher />
+        <Analytics />
       </body>
     </html>
   );
