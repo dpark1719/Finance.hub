@@ -1,0 +1,223 @@
+/**
+ * Generates src/lib/kospi-lookup.generated.ts
+ *
+ * Sources (attribution in generated file header):
+ * - KRX KIND: KOSPI listed companies (Korean names) — HTML table, EUC-KR
+ * - Wikipedia "KOSPI 200" wikitext: English display names + 6-digit codes (200 rows)
+ *
+ * Run: node scripts/generate-kospi-lookup.mjs
+ */
+
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { execSync } from "child_process";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const root = path.join(__dirname, "..");
+const outFile = path.join(root, "src/lib/kospi-lookup.generated.ts");
+const cacheDir = path.join(__dirname, ".cache");
+const krxPath = path.join(cacheDir, "krx_kospi.xls");
+
+const KRX_URL =
+  "https://kind.krx.co.kr/corpgeneral/corpList.do?method=download&marketType=stockMkt";
+const WIKI_API =
+  "https://en.wikipedia.org/w/api.php?action=query&titles=KOSPI_200&prop=revisions&rvprop=content&format=json&rvslots=main";
+
+fs.mkdirSync(cacheDir, { recursive: true });
+
+function download(url, dest) {
+  execSync(`curl -fsSL "${url}" -o "${dest}"`, { stdio: "inherit" });
+}
+
+/** EUC-KR / KS C 5601 */
+function decodeEucKr(buf) {
+  return new TextDecoder("euc-kr").decode(buf);
+}
+
+function normalizeLookupKey(s) {
+  return s
+    .trim()
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[’'`]/g, "")
+    .replace(/[^\p{L}\p{N}\s.-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const CORP_EN =
+  /\s*,?\s*(inc\.?|incorporated|corporation|corp\.?|plc\.?|plc|ltd\.?|limited|company|co\.?|group)\s*$/i;
+
+function stripCorpEnglish(name) {
+  let n = name.trim();
+  let prev;
+  do {
+    prev = n;
+    n = n.replace(CORP_EN, "").trim();
+  } while (n !== prev);
+  return n;
+}
+
+/** `[[A|B]]` → B, `[[A]]` → A */
+function wikiDisplayName(cell) {
+  let s = cell.trim();
+  s = s.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2");
+  s = s.replace(/\[\[([^\]]+)\]\]/g, "$1");
+  s = s.replace(/''+/g, "");
+  s = s.replace(/<[^>]+>/g, "");
+  return s.trim();
+}
+
+function parseKrxHtml(html) {
+  const re =
+    /<tr[^>]*>\s*<td>([^<]+)<\/td>\s*<td>[\s\S]*?유가[\s\S]*?<\/td>\s*<td[^>]*>(\d{6})<\/td>/gi;
+  const out = [];
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    out.push({ name: m[1].trim(), code: m[2] });
+  }
+  return out;
+}
+
+function parseWikiComponents(wikitext) {
+  const start = wikitext.indexOf("==Components==");
+  if (start < 0) return [];
+  const rest = wikitext.slice(start + 14);
+  const endM = rest.match(/\n==[^=]/);
+  const chunk = endM ? rest.slice(0, endM.index) : rest;
+  const out = [];
+  for (const line of chunk.split("\n")) {
+    const t = line.trim();
+    const m = /^\|\s*(.+?)\s*\|\|\s*(\d{6})\s*\|\|/.exec(t);
+    if (!m) continue;
+    const name = wikiDisplayName(m[1]);
+    const code = m[2];
+    if (name && /^\d{6}$/.test(code)) out.push({ name, code });
+  }
+  return out;
+}
+
+function main() {
+  console.error("Downloading KRX KOSPI list…");
+  download(KRX_URL, krxPath);
+  const krxHtml = decodeEucKr(fs.readFileSync(krxPath));
+  const krxRows = parseKrxHtml(krxHtml);
+  console.error(`KRX rows: ${krxRows.length}`);
+
+  console.error("Fetching Wikipedia KOSPI 200 components…");
+  const wikiJson = execSync(`curl -fsSL "${WIKI_API}"`, {
+    encoding: "utf-8",
+    maxBuffer: 5 * 1024 * 1024,
+  });
+  const wikiData = JSON.parse(wikiJson);
+  const page = wikiData.query?.pages
+    ? wikiData.query.pages[Object.keys(wikiData.query.pages)[0]]
+    : null;
+  const wikitext =
+    page?.revisions?.[0]?.slots?.main?.["*"] ?? "";
+  const wikiRows = parseWikiComponents(wikitext);
+  console.error(`Wikipedia KOSPI 200 rows: ${wikiRows.length}`);
+
+  /** code -> primary Finnhub/Yahoo symbol */
+  const codeToSym = (code) => `${code}.KS`;
+
+  /** normalized key -> symbol (first wins on conflict) */
+  const keyToSymbol = new Map();
+
+  function addKey(rawName, code) {
+    if (!/^\d{6}$/.test(code)) return;
+    const sym = codeToSym(code);
+    const keys = new Set();
+    const n1 = normalizeLookupKey(rawName);
+    if (n1.length >= 2) keys.add(n1);
+    const stripped = normalizeLookupKey(stripCorpEnglish(rawName));
+    if (stripped.length >= 2 && stripped !== n1) keys.add(stripped);
+    const symKey = code.toLowerCase();
+    keys.add(symKey);
+    for (const k of keys) {
+      if (!keyToSymbol.has(k)) keyToSymbol.set(k, sym);
+    }
+  }
+
+  for (const { name, code } of krxRows) {
+    addKey(name, code);
+  }
+  for (const { name, code } of wikiRows) {
+    addKey(name, code);
+  }
+
+  const codes = [...new Set([...krxRows.map((r) => r.code), ...wikiRows.map((r) => r.code)])].filter(
+    (c) => /^\d{6}$/.test(c),
+  );
+  codes.sort();
+
+  const sortedKeys = [...keyToSymbol.keys()].sort((a, b) => a.localeCompare(b));
+  const lookupEntries = sortedKeys
+    .map((k) => `  ${JSON.stringify(k)}: ${JSON.stringify(keyToSymbol.get(k))},`)
+    .join("\n");
+  const codeEntries = codes.map((c) => `  ${JSON.stringify(c)},`).join("\n");
+
+  const header = `/**
+ * AUTO-GENERATED by scripts/generate-kospi-lookup.mjs — do not edit by hand.
+ *
+ * Sources:
+ * - KRX KIND (kind.krx.co.kr) KOSPI listed companies — Korean official names (EUC-KR table).
+ * - Wikipedia "KOSPI 200" components (English names), CC BY-SA; see page history.
+ *
+ * Symbols use Finnhub/Yahoo Korea form: ######.KS
+ * Regenerate: npm run generate:kospi
+ */
+
+`;
+
+  const body = `${header}export const KOSPI_LOOKUP: Record<string, string> = {
+${lookupEntries}
+};
+
+/** Six-digit KOSPI / KOSPI-style listing codes in this dataset */
+export const KOSPI_CODES: readonly string[] = [
+${codeEntries}
+];
+
+const KOSPI_CODE_SET = new Set(KOSPI_CODES);
+
+export function normalizeKospiQuery(raw: string): string {
+  return raw
+    .trim()
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/['\`'’]/g, "")
+    .replace(/[^\\p{L}\\p{N}\\s.-]/gu, " ")
+    .replace(/\\s+/g, " ")
+    .trim();
+}
+
+export function resolveKospiLookup(raw: string): string | null {
+  const q = normalizeKospiQuery(raw);
+  if (!q) return null;
+  return KOSPI_LOOKUP[q] ?? null;
+}
+
+export function isKospiSixDigitCode(code: string): boolean {
+  const c = code.trim();
+  return /^\\d{6}$/.test(c) && KOSPI_CODE_SET.has(c);
+}
+
+/** True if symbol is ######.KS and code is in the dataset */
+export function isKospiListedSymbol(symbol: string): boolean {
+  const u = symbol.trim().toUpperCase();
+  const m = /^(\\d{6})\\.KS$/.exec(u);
+  return m ? KOSPI_CODE_SET.has(m[1]) : false;
+}
+`;
+
+  fs.writeFileSync(outFile, body, "utf-8");
+  console.error(
+    `Wrote ${outFile} (${sortedKeys.length} lookup keys, ${codes.length} codes).`,
+  );
+}
+
+main();

@@ -71,9 +71,12 @@ export default function Home() {
           CNN Fear &amp; Greed, and dividend payout — graded for quick context.
           Type a ticker (<span className="font-mono">AAPL</span>,{" "}
           <span className="font-mono">brk.b</span>) or an{" "}
-          <span className="text-zinc-300">S&amp;P 500</span> company name
+          <span className="text-zinc-300">S&amp;P 500</span> or{" "}
+          <span className="text-zinc-300">KOSPI</span> names
           (<span className="font-mono">apple</span>,{" "}
-          <span className="font-mono">berkshire hathaway</span>). Other names use
+          <span className="font-mono">samsung electronics</span>,{" "}
+          <span className="font-mono">삼성전자</span>,{" "}
+          <span className="font-mono">005930.KS</span>). Other names use
           Finnhub search, with Yahoo fallbacks when the free tier blocks an exchange.
           Not investment advice; data depends on coverage and delays.
         </p>

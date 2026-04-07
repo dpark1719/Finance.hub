@@ -1,6 +1,11 @@
 import { resolveCommonStockAlias } from "@/lib/common-stock-aliases";
 import { searchSymbols, type SymbolSearchHit } from "@/lib/finnhub";
 import {
+  isKospiListedSymbol,
+  isKospiSixDigitCode,
+  resolveKospiLookup,
+} from "@/lib/kospi-lookup.generated";
+import {
   isSp500Ticker,
   resolveSp500Lookup,
 } from "@/lib/sp500-lookup.generated";
@@ -36,6 +41,13 @@ function scoreSearchHit(h: SymbolSearchHit): number {
   if (/NASDAQ|NYSE|NMS|US\W/.test(ex) || ex === "US") sc += 40;
   const sym = (h.symbol ?? h.displaySymbol ?? "").toUpperCase();
   if (sym && isSp500Ticker(sym)) sc += 55;
+  if (
+    sym &&
+    (isKospiListedSymbol(sym) ||
+      isKospiSixDigitCode(sym.replace(/\.KS$/i, "")))
+  ) {
+    sc += 48;
+  }
   return sc;
 }
 
@@ -55,7 +67,11 @@ export async function resolveStockQuery(raw: string): Promise<ResolvedQuery> {
     return { symbol: "", resolutionNote: null };
   }
   if (looksLikeTickerSymbol(q)) {
-    return { symbol: q.toUpperCase(), resolutionNote: null };
+    let sym = q.toUpperCase();
+    if (/^\d{6}$/.test(sym) && isKospiSixDigitCode(sym)) {
+      sym = `${sym}.KS`;
+    }
+    return { symbol: sym, resolutionNote: null };
   }
 
   const aliasedEarly = resolveCommonStockAlias(q);
@@ -71,6 +87,14 @@ export async function resolveStockQuery(raw: string): Promise<ResolvedQuery> {
     return {
       symbol: sp500,
       resolutionNote: `Matched “${q}” → ${sp500} (S&P 500)`,
+    };
+  }
+
+  const kospi = resolveKospiLookup(q);
+  if (kospi) {
+    return {
+      symbol: kospi,
+      resolutionNote: `Matched “${q}” → ${kospi} (KOSPI)`,
     };
   }
 
