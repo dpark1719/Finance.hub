@@ -17,6 +17,18 @@ const StockPriceChart = dynamic(
   },
 );
 
+const Sp500Heatmap = dynamic(
+  () => import("@/components/Sp500Heatmap").then((m) => m.Sp500Heatmap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mt-10 rounded-xl border border-zinc-800 bg-zinc-950/40 p-12 text-center text-sm text-zinc-500">
+        Loading S&amp;P 500 heatmap…
+      </div>
+    ),
+  },
+);
+
 const gradeStyles: Record<LetterGrade, string> = {
   A: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
   B: "bg-lime-500/20 text-lime-200 border-lime-500/35",
@@ -32,8 +44,8 @@ export default function Home() {
   const [report, setReport] = useState<StockReport | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  const run = useCallback(async () => {
-    const symbol = q.trim();
+  const run = useCallback(async (symbolOverride?: string) => {
+    const symbol = (symbolOverride ?? q).trim();
     if (!symbol) return;
     setLoading(true);
     setErr(null);
@@ -53,6 +65,14 @@ export default function Home() {
       setLoading(false);
     }
   }, [q]);
+
+  const onHeatmapSymbol = useCallback(
+    (sym: string) => {
+      setQ(sym);
+      void run(sym);
+    },
+    [run],
+  );
 
   return (
     <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
@@ -86,13 +106,13 @@ export default function Home() {
             type="text"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && run()}
+            onKeyDown={(e) => e.key === "Enter" && void run()}
             placeholder="Company or ticker (apple, Google, AAPL, 7203.T)"
             className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900/80 px-4 py-3 font-mono text-base text-white outline-none ring-blue-500/30 placeholder:text-zinc-600 focus:border-blue-500/50 focus:ring-2 sm:max-w-md sm:text-sm"
           />
           <button
             type="button"
-            onClick={run}
+            onClick={() => void run()}
             disabled={loading || !q.trim()}
             className="touch-manipulation shrink-0 rounded-lg bg-blue-600 px-5 py-3 text-base font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
           >
@@ -100,6 +120,8 @@ export default function Home() {
           </button>
         </div>
       </header>
+
+      <Sp500Heatmap onSelectSymbol={onHeatmapSymbol} />
 
       {err && (
         <div

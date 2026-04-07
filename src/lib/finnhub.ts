@@ -14,6 +14,11 @@ export function isFinnhubForbidden(e: unknown): boolean {
   return e instanceof FinnhubError && e.Status === 403;
 }
 
+/** Free tier: 403 (no access) or 429 (rate limit) — treat both as “try Yahoo”. */
+export function isFinnhubBlockedOrRateLimited(e: unknown): boolean {
+  return e instanceof FinnhubError && (e.Status === 403 || e.Status === 429);
+}
+
 function getToken(): string {
   const raw = process.env.FINNHUB_API_KEY;
   if (!raw) {

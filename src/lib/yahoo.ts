@@ -168,6 +168,106 @@ export function toYahooSymbol(finnhubSymbol: string): string {
   return s;
 }
 
+/** One row from Yahoo `v7/finance/quote` (used for S&P 500 heatmap batches). */
+export interface YahooV7QuoteRow {
+  finnhubSymbol: string;
+  /** Prefer long form for UI (heatmap tooltip, etc.). */
+  companyName?: string;
+  shortName?: string;
+  marketCap: number | null;
+  changePct: number | null;
+  o: number | null;
+  h: number | null;
+  l: number | null;
+  c: number | null;
+  sharesOutstanding: number | null;
+}
+
+function parseYahooV7Num(v: unknown): number | null {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  return null;
+}
+
+function mapYahooV7Row(r: Record<string, unknown>): YahooV7QuoteRow {
+  const sym = String(r.symbol ?? "");
+  const longN =
+    typeof r.longName === "string" ? r.longName.trim() : "";
+  const shortN =
+    typeof r.shortName === "string" ? r.shortName.trim() : "";
+  const disp =
+    typeof r.displayName === "string" ? r.displayName.trim() : "";
+  const companyName = longN || shortN || disp || undefined;
+  return {
+    finnhubSymbol: yahooTickerToFinnhub(sym),
+    companyName,
+    shortName: shortN || longN || disp || undefined,
+    marketCap: parseYahooV7Num(r.marketCap),
+    changePct: parseYahooV7Num(r.regularMarketChangePercent),
+    o: parseYahooV7Num(r.regularMarketOpen),
+    h: parseYahooV7Num(r.regularMarketDayHigh),
+    l: parseYahooV7Num(r.regularMarketDayLow),
+    c: parseYahooV7Num(r.regularMarketPrice),
+    sharesOutstanding: parseYahooV7Num(r.sharesOutstanding),
+  };
+}
+
+function fetchYahooQuotesV7Sync(yahooSymbols: string[]): YahooV7QuoteRow[] {
+  if (yahooSymbols.length === 0) return [];
+  ensureCrumbSessionSync();
+  const buildUrl = (crumb: string) => {
+    const symList = yahooSymbols.join(",");
+    return `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symList)}&crumb=${encodeURIComponent(crumb)}`;
+  };
+
+  let sess = ensureCrumbSessionSync();
+  let res = curlGet(buildUrl(sess.crumb), { cookie: sess.cookie });
+  if (res.status === 401) {
+    crumbSession = null;
+    sess = ensureCrumbSessionSync();
+    res = curlGet(buildUrl(sess.crumb), { cookie: sess.cookie });
+  }
+  if (res.status !== 200) {
+    throw new Error(`Yahoo quote v7 HTTP ${res.status}`);
+  }
+  let json: {
+    quoteResponse?: {
+      result?: Array<Record<string, unknown>>;
+      error?: { code?: string; description?: string };
+    };
+  };
+  try {
+    json = JSON.parse(res.body) as typeof json;
+  } catch {
+    throw new Error("Yahoo quote v7: invalid JSON");
+  }
+  const qe = json.quoteResponse?.error;
+  if (qe?.description) throw new Error(qe.description);
+  const results = json.quoteResponse?.result ?? [];
+  return results.map((row) => mapYahooV7Row(row));
+}
+
+/**
+ * Batched Yahoo quotes for many tickers (Finnhub-style symbols → Yahoo internally).
+ * Uses cookie+crumb; spaces requests slightly to reduce 429s.
+ */
+export async function fetchYahooQuotesForFinnhubSymbols(
+  finnhubSymbols: readonly string[],
+  batchSize = 38,
+  pauseMs = 320,
+): Promise<Map<string, YahooV7QuoteRow>> {
+  const map = new Map<string, YahooV7QuoteRow>();
+  const yahooList = finnhubSymbols.map((s) => toYahooSymbol(s));
+  for (let i = 0; i < yahooList.length; i += batchSize) {
+    const chunk = yahooList.slice(i, i + batchSize);
+    const rows = fetchYahooQuotesV7Sync(chunk);
+    for (const row of rows) {
+      map.set(row.finnhubSymbol, row);
+    }
+    if (i + batchSize < yahooList.length && pauseMs > 0) await sleep(pauseMs);
+  }
+  return map;
+}
+
 export interface YahooChartPoint {
   t: number;
   c: number;
@@ -191,7 +291,7 @@ export interface YahooFundamentals {
   fcf: { value: number; periodLabel: string } | null;
 }
 
-/** When Finnhub returns 403 (common on free tier for many non‑US symbols), one Yahoo quoteSummary fills gaps. */
+/** When Finnhub blocks or rate-limits (403/429) or data is thin, one Yahoo quoteSummary fills gaps. */
 export interface YahooFinnhubFallbackResult {
   /** Minimal shape compatible with Finnhub `Quote` (`c` = last price). */
   quote: { c: number } | null;
@@ -200,10 +300,13 @@ export interface YahooFinnhubFallbackResult {
     exchange?: string;
     currency?: string;
     country?: string;
+    shareOutstanding?: number;
   } | null;
   /** Keys aligned with Finnhub `/stock/metric` names where possible. */
   metricBag: Record<string, number | string | null | undefined>;
   fundamentals: YahooFundamentals;
+  /** Finnhub profile2 convention (millions) — set when Yahoo has shares data even if name block is empty. */
+  shareOutstandingMln?: number;
 }
 
 const fh403Cache = new Map<string, Timed<YahooFinnhubFallbackResult>>();
@@ -230,14 +333,10 @@ function parseTargetFromResult(
   return { targetMean: mean, targetHigh: high, targetLow: low, lastUpdated: undefined };
 }
 
-function parseFcfFromResult(
-  r0: {
-    cashflowStatementHistory?: {
-      cashflowStatements?: Array<Record<string, { raw?: number; fmt?: string } | undefined>>;
-    };
-  } | undefined,
+function fcfFromCashflowBlock(
+  stmts: Array<Record<string, { raw?: number; fmt?: string } | undefined>> | undefined,
+  labelPrefix: string,
 ): { value: number; periodLabel: string } | null {
-  const stmts = r0?.cashflowStatementHistory?.cashflowStatements;
   if (!stmts?.length) return null;
   const row = stmts[0] as Record<string, { raw?: number; fmt?: string } | undefined>;
   const endRaw = row.endDate;
@@ -259,7 +358,25 @@ function parseFcfFromResult(
     }
   }
   if (typeof fcf !== "number" || !Number.isFinite(fcf)) return null;
-  return { value: fcf, periodLabel: String(end) };
+  return { value: fcf, periodLabel: `${labelPrefix} ${end}`.trim() };
+}
+
+function parseFcfFromResult(
+  r0: {
+    cashflowStatementHistory?: {
+      cashflowStatements?: Array<Record<string, { raw?: number; fmt?: string } | undefined>>;
+    };
+    cashflowStatementHistoryQuarterly?: {
+      cashflowStatements?: Array<Record<string, { raw?: number; fmt?: string } | undefined>>;
+    };
+  } | undefined,
+): { value: number; periodLabel: string } | null {
+  const annual = fcfFromCashflowBlock(r0?.cashflowStatementHistory?.cashflowStatements, "Annual");
+  if (annual) return annual;
+  return fcfFromCashflowBlock(
+    r0?.cashflowStatementHistoryQuarterly?.cashflowStatements,
+    "Quarterly",
+  );
 }
 
 /** One HTTP call: analyst target + cash flow history (cuts Yahoo traffic ~50%). */
@@ -269,7 +386,8 @@ export async function fetchYahooFundamentals(finnhubSymbol: string): Promise<Yah
   const hit = cacheGet(fundCache, key, CACHE_TTL_MS);
   if (hit) return hit;
 
-  const modules = "financialData%2CcashflowStatementHistory";
+  const modules =
+    "financialData%2CcashflowStatementHistory%2CcashflowStatementHistoryQuarterly";
   const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ySym)}?modules=${modules}`;
   const { status, data: json } = await yahooCurlJsonWithRetry<{
     quoteSummary?: {
@@ -277,6 +395,9 @@ export async function fetchYahooFundamentals(finnhubSymbol: string): Promise<Yah
       result?: Array<{
         financialData?: YahooQuoteFinancialData;
         cashflowStatementHistory?: {
+          cashflowStatements?: Array<Record<string, { raw?: number; fmt?: string } | undefined>>;
+        };
+        cashflowStatementHistoryQuarterly?: {
           cashflowStatements?: Array<Record<string, { raw?: number; fmt?: string } | undefined>>;
         };
       }>;
@@ -298,8 +419,8 @@ export async function fetchYahooFundamentals(finnhubSymbol: string): Promise<Yah
 }
 
 /**
- * Single quoteSummary call when Finnhub blocks quote/profile/metrics (403).
- * Also warms `fundCache` so `fetchYahooFundamentals` avoids a duplicate request.
+ * Single quoteSummary when Finnhub blocks/rate-limits (403/429) or for gap-fill merges.
+ * Warms `fundCache` so `fetchYahooFundamentals` avoids a duplicate request.
  */
 export async function fetchYahooFinnhubFallback(
   finnhubSymbol: string,
@@ -310,7 +431,7 @@ export async function fetchYahooFinnhubFallback(
   if (hit) return hit;
 
   const modules =
-    "price%2CsummaryProfile%2CdefaultKeyStatistics%2CfinancialData%2CcashflowStatementHistory";
+    "price%2CsummaryProfile%2CdefaultKeyStatistics%2CfinancialData%2CcashflowStatementHistory%2CcashflowStatementHistoryQuarterly";
   const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ySym)}?modules=${modules}`;
   const { status, data: json } = await yahooCurlJsonWithRetry<{
     quoteSummary?: {
@@ -369,6 +490,10 @@ export async function fetchYahooFinnhubFallback(
     summaryProfile?.shortName?.trim() ||
     null;
 
+  const sharesFull = yahooRaw(stats?.sharesOutstanding);
+  const shareOutstanding =
+    sharesFull != null && sharesFull > 0 ? sharesFull / 1_000_000 : undefined;
+
   const profile =
     name != null
       ? {
@@ -376,6 +501,7 @@ export async function fetchYahooFinnhubFallback(
           exchange: price?.exchangeName ?? summaryProfile?.exchange,
           currency: price?.currency,
           country: summaryProfile?.country,
+          ...(shareOutstanding != null ? { shareOutstanding } : {}),
         }
       : null;
 
@@ -399,6 +525,20 @@ export async function fetchYahooFinnhubFallback(
     metricBag["longTermDebt/equityQuarterly"] = dte;
   }
 
+  const trailEps = yahooRaw(stats?.trailingEps);
+  if (trailEps != null) metricBag.epsTTM = trailEps;
+
+  const trailDiv = yahooRaw(stats?.trailingAnnualDividendRate);
+  const divRate = yahooRaw(stats?.dividendRate);
+  const dps = trailDiv ?? divRate;
+  if (dps != null) metricBag.dividendPerShareTTM = dps;
+
+  const payoutRaw = yahooRaw(stats?.payoutRatio);
+  if (payoutRaw != null && payoutRaw >= 0) {
+    const asPct = payoutRaw > 0 && payoutRaw <= 1 ? payoutRaw * 100 : payoutRaw;
+    metricBag.dividendPayoutRatioTTM = asPct;
+  }
+
   const fundamentals: YahooFundamentals = {
     target: parseTargetFromResult(finData),
     fcf: parseFcfFromResult(
@@ -406,11 +546,20 @@ export async function fetchYahooFinnhubFallback(
         cashflowStatementHistory?: {
           cashflowStatements?: Array<Record<string, { raw?: number; fmt?: string } | undefined>>;
         };
+        cashflowStatementHistoryQuarterly?: {
+          cashflowStatements?: Array<Record<string, { raw?: number; fmt?: string } | undefined>>;
+        };
       },
     ),
   };
 
-  const out: YahooFinnhubFallbackResult = { quote, profile, metricBag, fundamentals };
+  const out: YahooFinnhubFallbackResult = {
+    quote,
+    profile,
+    metricBag,
+    fundamentals,
+    ...(shareOutstanding != null ? { shareOutstandingMln: shareOutstanding } : {}),
+  };
   cacheSet(fh403Cache, key, out);
   cacheSet(fundCache, `fund:${ySym}`, fundamentals);
   return out;

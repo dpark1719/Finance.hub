@@ -8,7 +8,7 @@ import {
   fetchProfile,
   fetchQuote,
   fetchStockMetrics,
-  isFinnhubForbidden,
+  isFinnhubBlockedOrRateLimited,
   lastRsiFromIndicator,
   num,
   type Profile,
@@ -64,6 +64,11 @@ function computePeg(pe: number | null, metrics: StockMetricBag | undefined): num
 }
 
 function computePayoutPct(metrics: StockMetricBag | undefined): number | null {
+  const direct = num(metrics ?? {}, ["dividendPayoutRatioTTM", "payoutRatioTTM"]);
+  if (direct != null && direct >= 0) {
+    const pct = direct > 0 && direct <= 1 ? direct * 100 : direct;
+    if (pct >= 0 && pct <= 150) return pct;
+  }
   const dps = num(metrics ?? {}, ["dividendPerShareTTM", "dividendPerShareAnnual"]);
   const eps = num(metrics ?? {}, ["epsTTM", "epsBasicTTM", "epsAnnual"]);
   if (dps == null || eps == null || eps <= 0) return null;
@@ -81,6 +86,22 @@ function totalFcf(
   if (typeof sh !== "number" || !Number.isFinite(sh) || sh <= 0) return fcfRaw;
   // Finnhub profile reports shareOutstanding in millions
   return fcfRaw * sh * 1_000_000;
+}
+
+function lastPriceMissing(quote: { c?: number } | null): boolean {
+  const c = quote?.c;
+  return c == null || !Number.isFinite(Number(c));
+}
+
+function metricBagNeedsYahoo(
+  metricRes: PromiseSettledResult<{ metric?: StockMetricBag } | null>,
+  bag: StockMetricBag | undefined,
+): boolean {
+  if (metricRes.status === "rejected") return true;
+  const m = bag ?? {};
+  const hasPe = num(m, ["peTTM", "peNormalizedAnnual", "peAnnual"]) != null;
+  const hasBeta = num(m, ["beta"]) != null;
+  return !hasPe && !hasBeta;
 }
 
 export async function buildStockReport(
@@ -131,7 +152,7 @@ export async function buildStockReport(
     );
   }
   const cf = cfRes.status === "fulfilled" ? cfRes.value : undefined;
-  if (cfRes.status === "rejected" && !isFinnhubForbidden(cfRes.reason)) {
+  if (cfRes.status === "rejected" && !isFinnhubBlockedOrRateLimited(cfRes.reason)) {
     warnings.push(`Cash flow statement failed: ${rejectionReason(cfRes.reason)}`);
   }
 
@@ -140,42 +161,129 @@ export async function buildStockReport(
   let usedYahoo = false;
   let yahooFundamentalsPrefetched: YahooFundamentals | null = null;
 
-  const fhQuote403 =
-    quoteRes.status === "rejected" && isFinnhubForbidden(quoteRes.reason);
-  const fhProfile403 =
-    profileRes.status === "rejected" && isFinnhubForbidden(profileRes.reason);
-  const fhMetrics403 =
-    metricRes.status === "rejected" && isFinnhubForbidden(metricRes.reason);
+  const fhQuoteBlocked =
+    quoteRes.status === "rejected" && isFinnhubBlockedOrRateLimited(quoteRes.reason);
+  const fhProfileBlocked =
+    profileRes.status === "rejected" && isFinnhubBlockedOrRateLimited(profileRes.reason);
+  const fhMetricsBlocked =
+    metricRes.status === "rejected" && isFinnhubBlockedOrRateLimited(metricRes.reason);
 
-  if (fhQuote403 || fhProfile403 || fhMetrics403) {
+  if (fhQuoteBlocked || fhProfileBlocked || fhMetricsBlocked) {
     try {
       const fb = await fetchYahooFinnhubFallback(symbol);
       yahooFundamentalsPrefetched = fb.fundamentals;
-      usedYahoo = true;
-      if (fhQuote403 && fb.quote) {
+      let appliedFromBlockedFallback = false;
+      if (fhQuoteBlocked && fb.quote) {
         quote = fb.quote;
         warnings = warnings.filter((w) => !w.startsWith("Quote request failed"));
+        appliedFromBlockedFallback = true;
       }
-      if (fhProfile403 && fb.profile?.name) {
+      if (fhProfileBlocked && fb.profile?.name) {
         profile = {
           ...profile,
           name: fb.profile.name,
           exchange: fb.profile.exchange ?? profile?.exchange,
           currency: fb.profile.currency ?? profile?.currency,
           country: fb.profile.country ?? profile?.country,
+          shareOutstanding: profile?.shareOutstanding ?? fb.profile.shareOutstanding,
         };
         warnings = warnings.filter((w) => !w.startsWith("Profile request failed"));
+        appliedFromBlockedFallback = true;
       }
-      if (fhMetrics403 && Object.keys(fb.metricBag).length > 0) {
+      if (fhMetricsBlocked && Object.keys(fb.metricBag).length > 0) {
         stockMetric = {
           metric: { ...(stockMetric?.metric ?? {}), ...fb.metricBag },
         };
         warnings = warnings.filter((w) =>
           !w.startsWith("Fundamental metrics request failed"),
         );
+        appliedFromBlockedFallback = true;
+      }
+      if (appliedFromBlockedFallback) usedYahoo = true;
+    } catch (e) {
+      warnings.push(`Yahoo fallback (Finnhub blocked/rate-limited): ${rejectionReason(e)}`);
+    }
+  }
+
+  const gapNeeded =
+    lastPriceMissing(quote) ||
+    !String(profile?.name ?? "").trim() ||
+    metricBagNeedsYahoo(metricRes, stockMetric?.metric);
+
+  if (gapNeeded) {
+    try {
+      const fb = await fetchYahooFinnhubFallback(symbol);
+      if (!yahooFundamentalsPrefetched) yahooFundamentalsPrefetched = fb.fundamentals;
+
+      if (lastPriceMissing(quote) && fb.quote?.c != null && Number.isFinite(fb.quote.c)) {
+        quote = fb.quote;
+        warnings = warnings.filter((w) => !w.startsWith("Quote request failed"));
+        usedYahoo = true;
+      }
+
+      if (fb.profile?.name?.trim()) {
+        if (!String(profile?.name ?? "").trim()) {
+          profile = {
+            ...profile,
+            name: fb.profile.name,
+            exchange: fb.profile.exchange ?? profile?.exchange,
+            currency: fb.profile.currency ?? profile?.currency,
+            country: fb.profile.country ?? profile?.country,
+            shareOutstanding: profile?.shareOutstanding ?? fb.profile.shareOutstanding,
+          };
+          warnings = warnings.filter((w) => !w.startsWith("Profile request failed"));
+          usedYahoo = true;
+        } else {
+          const prev = profile!;
+          profile = {
+            ...prev,
+            exchange: prev.exchange ?? fb.profile.exchange,
+            currency: prev.currency ?? fb.profile.currency,
+            country: prev.country ?? fb.profile.country,
+            shareOutstanding: prev.shareOutstanding ?? fb.profile.shareOutstanding,
+          };
+          if (
+            (prev.exchange == null && fb.profile.exchange != null) ||
+            (prev.currency == null && fb.profile.currency != null) ||
+            (prev.country == null && fb.profile.country != null) ||
+            (prev.shareOutstanding == null && fb.profile.shareOutstanding != null)
+          ) {
+            usedYahoo = true;
+          }
+        }
+      }
+
+      if (
+        fb.shareOutstandingMln != null &&
+        profile &&
+        (profile.shareOutstanding == null || !Number.isFinite(profile.shareOutstanding))
+      ) {
+        profile = { ...profile, shareOutstanding: fb.shareOutstandingMln };
+        usedYahoo = true;
+      }
+
+      if (Object.keys(fb.metricBag).length > 0) {
+        const m0 = { ...(stockMetric?.metric ?? {}) };
+        let touched = false;
+        for (const [k, v] of Object.entries(fb.metricBag)) {
+          if (v === undefined) continue;
+          if (m0[k] == null) {
+            (m0 as Record<string, unknown>)[k] = v;
+            touched = true;
+          }
+        }
+        if (touched) {
+          stockMetric = { metric: m0 };
+          usedYahoo = true;
+        }
+        if (metricRes.status === "rejected" && touched) {
+          warnings = warnings.filter((w) =>
+            !w.startsWith("Fundamental metrics request failed"),
+          );
+        }
       }
     } catch (e) {
-      warnings.push(`Yahoo fallback (Finnhub 403): ${rejectionReason(e)}`);
+      warnings.push(`Yahoo gap-fill: ${rejectionReason(e)}`);
     }
   }
 
@@ -183,7 +291,7 @@ export async function buildStockReport(
     t == null ||
     (t.targetMean == null && t.targetMedian == null && t.targetHigh == null);
 
-  if (targetRes.status === "rejected" && !isFinnhubForbidden(targetRes.reason)) {
+  if (targetRes.status === "rejected" && !isFinnhubBlockedOrRateLimited(targetRes.reason)) {
     warnings.push(`Price target request failed: ${rejectionReason(targetRes.reason)}`);
   }
 
@@ -196,7 +304,7 @@ export async function buildStockReport(
   } = extractFcf(cf, bag, lastPriceRaw);
 
   const target403 =
-    targetRes.status === "rejected" && isFinnhubForbidden(targetRes.reason);
+    targetRes.status === "rejected" && isFinnhubBlockedOrRateLimited(targetRes.reason);
   const targetEmpty =
     targetRes.status === "fulfilled" && targetLooksEmpty(priceTarget);
   const needTargetYahoo = target403 || targetEmpty;
@@ -230,7 +338,7 @@ export async function buildStockReport(
         usedYahoo = true;
       } else if (needTargetYahoo) {
         warnings.push(
-          "Analyst price target unavailable (Finnhub blocked or empty; Yahoo had no target).",
+          "Analyst price target unavailable (Finnhub blocked/rate-limited or empty; Yahoo had no target).",
         );
       }
 
@@ -240,9 +348,9 @@ export async function buildStockReport(
         fcfIsPerShare = false;
         usedYahoo = true;
       } else if (needFcfYahoo && !yf.fcf) {
-        if (cfRes.status === "rejected" && isFinnhubForbidden(cfRes.reason)) {
+        if (cfRes.status === "rejected" && isFinnhubBlockedOrRateLimited(cfRes.reason)) {
           warnings.push(
-            "Free cash flow unavailable (Finnhub 403; Yahoo cash flow line missing).",
+            "Free cash flow unavailable (Finnhub blocked/rate-limited; Yahoo cash flow line missing).",
           );
         } else {
           warnings.push(
@@ -258,6 +366,10 @@ export async function buildStockReport(
         warnings.push(`Free cash flow (Yahoo): ${rejectionReason(e)}`);
       }
     }
+  }
+
+  if (fcfNum != null) {
+    warnings = warnings.filter((w) => !w.startsWith("Cash flow statement failed"));
   }
 
   const lastPrice = lastPriceRaw;
@@ -329,7 +441,7 @@ export async function buildStockReport(
 
   if (usedYahoo) {
     warnings.push(
-      "FYI: Some figures use Yahoo Finance where Finnhub’s free tier blocks those endpoints (403).",
+      "FYI: Some figures use Yahoo Finance where Finnhub’s free tier blocks or rate-limits those endpoints (403/429).",
     );
   }
 
