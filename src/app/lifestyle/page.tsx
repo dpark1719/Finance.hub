@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useSupabaseUser } from "@/lib/hooks/useSupabaseUser";
+import { debounce } from "@/lib/debounce";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CITIES, INCOME_LEVELS, type CityData } from "@/lib/lifestyle-data";
 
 /* ── Types ────────────────────────────────────────────────────── */
@@ -338,6 +340,46 @@ function buildDiscretionaryDetail(city: CityData, monthlyDisc: number): Category
 
 type CategoryKey = "rent" | "food" | "transport" | "healthcare" | "utilities" | "insurance" | "personal" | "discretionary";
 
+function mergeBudgetOverrides(
+  b: BudgetResult["budget"],
+  o: Partial<Record<CategoryKey, number>>,
+): BudgetResult["budget"] {
+  const pick = (k: CategoryKey, base: number) => {
+    const v = o[k];
+    return typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : base;
+  };
+  const rent = pick("rent", b.rent);
+  const food = pick("food", b.food);
+  const transportation = pick("transport", b.transportation);
+  const healthcare = pick("healthcare", b.healthcare);
+  const utilities = pick("utilities", b.utilities);
+  const insurance = pick("insurance", b.insurance);
+  const personal = pick("personal", b.personal);
+  const discretionary = pick("discretionary", b.discretionary);
+  const essentials =
+    rent +
+    food +
+    transportation +
+    healthcare +
+    utilities +
+    insurance +
+    personal +
+    discretionary;
+  const savingsCapacity = Math.max(0, b.monthlyNet - essentials);
+  return {
+    ...b,
+    rent,
+    food,
+    transportation,
+    healthcare,
+    utilities,
+    insurance,
+    personal,
+    discretionary,
+    savingsCapacity,
+  };
+}
+
 function getCategoryDetail(
   key: CategoryKey,
   city: CityData,
@@ -421,7 +463,110 @@ export default function LifestylePage() {
   const [result, setResult] = useState<BudgetResult | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<CategoryKey>>(new Set());
+  const [budgetOverrides, setBudgetOverrides] = useState<Partial<Record<CategoryKey, number>>>({});
+  const [scenarioName, setScenarioName] = useState("");
+  const [scenarios, setScenarios] = useState<{ id: string; name: string; updated_at: string }[]>([]);
+  const [scenarioMsg, setScenarioMsg] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { user, ready, configured } = useSupabaseUser();
+  const draftHydrating = useRef(false);
+
+  const saveDraft = useMemo(
+    () =>
+      debounce((payload: Record<string, unknown>) => {
+        void fetch("/api/me/lifestyle/draft", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payload }),
+        }).catch(() => {});
+      }, 750),
+    [],
+  );
+
+  const loadScenarios = useCallback(async () => {
+    if (!user || !configured) return;
+    const res = await fetch("/api/me/lifestyle/scenarios");
+    const data = (await res.json()) as { scenarios?: { id: string; name: string; updated_at: string }[] };
+    if (res.ok && data.scenarios) setScenarios(data.scenarios);
+  }, [user, configured]);
+
+  useEffect(() => {
+    if (!ready || !user || !configured) return;
+    void loadScenarios();
+  }, [ready, user, configured, loadScenarios]);
+
+  useEffect(() => {
+    if (!ready || !user || !configured) return;
+    let cancelled = false;
+    draftHydrating.current = true;
+    void fetch("/api/me/lifestyle/draft")
+      .then((r) => r.json())
+      .then((d: { payload?: Record<string, unknown> }) => {
+        if (cancelled) return;
+        const p = d.payload ?? {};
+        if (typeof p.cityQuery === "string") setCityQuery(p.cityQuery);
+        if (typeof p.cityId === "string") {
+          const c = CITIES.find((x) => x.id === p.cityId);
+          if (c) {
+            setSelectedCity(c);
+            setCityQuery(
+              c.country === "US" ? `${c.name}, ${c.state}` : `${c.name}, ${COUNTRY_NAMES[c.country] ?? c.country}`,
+            );
+          }
+        }
+        if (typeof p.income === "number" && Number.isFinite(p.income)) setIncome(p.income);
+        if (p.income === "" || p.income === null) setIncome("");
+        if (typeof p.household === "number") setHousehold(Math.min(6, Math.max(1, p.household)));
+        if (Array.isArray(p.expandedRows)) {
+          const next = new Set<CategoryKey>();
+          for (const x of p.expandedRows) {
+            if (typeof x === "string") next.add(x as CategoryKey);
+          }
+          setExpandedRows(next);
+        }
+        if (p.budgetOverrides && typeof p.budgetOverrides === "object" && p.budgetOverrides !== null) {
+          const o: Partial<Record<CategoryKey, number>> = {};
+          for (const k of Object.keys(p.budgetOverrides) as CategoryKey[]) {
+            const v = (p.budgetOverrides as Record<string, unknown>)[k];
+            if (typeof v === "number" && Number.isFinite(v)) o[k] = v;
+          }
+          setBudgetOverrides(o);
+        }
+        requestAnimationFrame(() => {
+          draftHydrating.current = false;
+        });
+      })
+      .catch(() => {
+        draftHydrating.current = false;
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, user, configured]);
+
+  useEffect(() => {
+    if (!ready || !user || !configured) return;
+    if (draftHydrating.current) return;
+    saveDraft({
+      cityQuery,
+      cityId: selectedCity?.id ?? null,
+      income,
+      household,
+      expandedRows: [...expandedRows],
+      budgetOverrides,
+    });
+  }, [
+    cityQuery,
+    selectedCity,
+    income,
+    household,
+    expandedRows,
+    budgetOverrides,
+    ready,
+    user,
+    configured,
+    saveDraft,
+  ]);
 
   const cityLabel = useCallback((c: CityData) => {
     if (c.country === "US") return `${c.name}, ${c.state}`;
@@ -439,7 +584,7 @@ export default function LifestylePage() {
         (COUNTRY_NAMES[c.country] ?? "").toLowerCase().includes(q) ||
         c.id.includes(q),
     );
-  }, [cityQuery, CITIES]);
+  }, [cityQuery]);
 
   const selectCity = useCallback((c: CityData) => {
     setSelectedCity(c);
@@ -479,32 +624,36 @@ export default function LifestylePage() {
     });
   }, []);
 
-  const b = result?.budget;
+  const bRaw = result?.budget ?? null;
+  const displayB = useMemo(() => {
+    if (!bRaw) return null;
+    return mergeBudgetOverrides(bRaw, budgetOverrides);
+  }, [bRaw, budgetOverrides]);
 
   const details = useMemo(() => {
-    if (!b || !selectedCity) return null;
+    if (!bRaw || !selectedCity) return null;
     return {
-      rent: getCategoryDetail("rent", selectedCity, b, household),
-      food: getCategoryDetail("food", selectedCity, b, household),
-      transport: getCategoryDetail("transport", selectedCity, b, household),
-      healthcare: getCategoryDetail("healthcare", selectedCity, b, household),
-      utilities: getCategoryDetail("utilities", selectedCity, b, household),
-      insurance: getCategoryDetail("insurance", selectedCity, b, household),
-      personal: getCategoryDetail("personal", selectedCity, b, household),
-      discretionary: getCategoryDetail("discretionary", selectedCity, b, household),
+      rent: getCategoryDetail("rent", selectedCity, bRaw, household),
+      food: getCategoryDetail("food", selectedCity, bRaw, household),
+      transport: getCategoryDetail("transport", selectedCity, bRaw, household),
+      healthcare: getCategoryDetail("healthcare", selectedCity, bRaw, household),
+      utilities: getCategoryDetail("utilities", selectedCity, bRaw, household),
+      insurance: getCategoryDetail("insurance", selectedCity, bRaw, household),
+      personal: getCategoryDetail("personal", selectedCity, bRaw, household),
+      discretionary: getCategoryDetail("discretionary", selectedCity, bRaw, household),
     };
-  }, [b, selectedCity, household]);
+  }, [bRaw, selectedCity, household]);
 
-  const donutSlices: DonutSlice[] = b
+  const donutSlices: DonutSlice[] = displayB
     ? [
-        { label: "Rent", value: b.rent, color: "#3b82f6" },
-        { label: "Food", value: b.food, color: "#22c55e" },
-        { label: "Transport", value: b.transportation, color: "#f97316" },
-        { label: "Healthcare", value: b.healthcare, color: "#ef4444" },
-        { label: "Utilities", value: b.utilities, color: "#8b5cf6" },
-        { label: "Insurance", value: b.insurance, color: "#ec4899" },
-        { label: "Personal", value: b.personal, color: "#14b8a6" },
-        { label: "Discretionary", value: b.discretionary, color: "#6b7280" },
+        { label: "Rent", value: displayB.rent, color: "#3b82f6" },
+        { label: "Food", value: displayB.food, color: "#22c55e" },
+        { label: "Transport", value: displayB.transportation, color: "#f97316" },
+        { label: "Healthcare", value: displayB.healthcare, color: "#ef4444" },
+        { label: "Utilities", value: displayB.utilities, color: "#8b5cf6" },
+        { label: "Insurance", value: displayB.insurance, color: "#ec4899" },
+        { label: "Personal", value: displayB.personal, color: "#14b8a6" },
+        { label: "Discretionary", value: displayB.discretionary, color: "#6b7280" },
       ]
     : [];
 
@@ -618,6 +767,120 @@ export default function LifestylePage() {
         </div>
       </div>
 
+      {user && configured && (
+        <div className="mt-6 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/90 dark:bg-zinc-900/50 p-4">
+          <p className="text-xs font-medium text-slate-700 dark:text-zinc-300">Account · Lifestyle</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">
+            Your inputs and overrides save automatically. Name a scenario to store a snapshot you can reload later.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <input
+              type="text"
+              value={scenarioName}
+              onChange={(e) => setScenarioName(e.target.value)}
+              placeholder="Scenario name"
+              className="min-w-0 flex-1 rounded-lg border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white sm:max-w-xs"
+            />
+            <button
+              type="button"
+              onClick={async () => {
+                const name = scenarioName.trim();
+                if (!name) return;
+                setScenarioMsg(null);
+                const payload = {
+                  cityQuery,
+                  cityId: selectedCity?.id ?? null,
+                  income,
+                  household,
+                  expandedRows: [...expandedRows],
+                  budgetOverrides,
+                };
+                const res = await fetch("/api/me/lifestyle/scenarios", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name, payload }),
+                });
+                const data = (await res.json()) as { error?: string };
+                if (!res.ok) {
+                  setScenarioMsg(data.error ?? "Could not save");
+                  return;
+                }
+                setScenarioName("");
+                setScenarioMsg("Scenario saved.");
+                void loadScenarios();
+              }}
+              className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-500"
+            >
+              Save scenario
+            </button>
+          </div>
+          {scenarioMsg && <p className="mt-2 text-xs text-slate-600 dark:text-zinc-400">{scenarioMsg}</p>}
+          {scenarios.length > 0 && (
+            <ul className="mt-3 space-y-1 text-xs">
+              {scenarios.map((s) => (
+                <li key={s.id} className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    className="text-left font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                    onClick={async () => {
+                      const res = await fetch(`/api/me/lifestyle/scenarios/${s.id}`);
+                      const data = (await res.json()) as {
+                        scenario?: { payload?: Record<string, unknown> };
+                      };
+                      const p = data.scenario?.payload;
+                      if (!p || typeof p !== "object") return;
+                      if (typeof p.cityQuery === "string") setCityQuery(p.cityQuery);
+                      if (typeof p.cityId === "string") {
+                        const c = CITIES.find((x) => x.id === p.cityId);
+                        if (c) {
+                          setSelectedCity(c);
+                          setCityQuery(
+                            c.country === "US"
+                              ? `${c.name}, ${c.state}`
+                              : `${c.name}, ${COUNTRY_NAMES[c.country] ?? c.country}`,
+                          );
+                        }
+                      }
+                      if (typeof p.income === "number") setIncome(p.income);
+                      if (p.income === "" || p.income === null) setIncome("");
+                      if (typeof p.household === "number") setHousehold(Math.min(6, Math.max(1, p.household)));
+                      if (Array.isArray(p.expandedRows)) {
+                        const next = new Set<CategoryKey>();
+                        for (const x of p.expandedRows) {
+                          if (typeof x === "string") next.add(x as CategoryKey);
+                        }
+                        setExpandedRows(next);
+                      }
+                      if (p.budgetOverrides && typeof p.budgetOverrides === "object" && p.budgetOverrides !== null) {
+                        const o: Partial<Record<CategoryKey, number>> = {};
+                        for (const k of Object.keys(p.budgetOverrides) as CategoryKey[]) {
+                          const v = (p.budgetOverrides as Record<string, unknown>)[k];
+                          if (typeof v === "number" && Number.isFinite(v)) o[k] = v;
+                        }
+                        setBudgetOverrides(o);
+                      }
+                      setScenarioMsg(`Loaded “${s.name}”. Run Calculate to refresh API figures if needed.`);
+                    }}
+                  >
+                    {s.name}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-red-400 hover:underline"
+                    onClick={async () => {
+                      await fetch(`/api/me/lifestyle/scenarios/${s.id}`, { method: "DELETE" });
+                      void loadScenarios();
+                    }}
+                  >
+                    Delete
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       {/* ── Error ─────────────────────────────────────── */}
       {err && (
         <div className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
@@ -626,7 +889,7 @@ export default function LifestylePage() {
       )}
 
       {/* ── Results ───────────────────────────────────── */}
-      {result && b && (
+      {result && displayB && bRaw && (
         <div className="mt-8 space-y-6">
           {/* Lifestyle tier hero */}
           <div className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/95 dark:bg-zinc-900/40 p-8 sm:flex-row sm:justify-between">
@@ -642,22 +905,22 @@ export default function LifestylePage() {
                 {result.household === 1 ? "person" : "people"}
               </p>
               <p className="mt-1 text-sm text-slate-500 dark:text-zinc-500">
-                Effective tax rate: {b.effectiveRate}% · Take-home: ${fmt(b.netIncome)}/yr
+                Effective tax rate: {bRaw.effectiveRate}% · Take-home: ${fmt(bRaw.netIncome)}/yr
               </p>
             </div>
             <div className="text-center">
               <span
                 className="inline-block rounded-full px-5 py-2 text-sm font-bold uppercase tracking-wider"
                 style={{
-                  backgroundColor: b.tierColor + "20",
-                  color: b.tierColor,
-                  border: `1px solid ${b.tierColor}50`,
+                  backgroundColor: displayB.tierColor + "20",
+                  color: displayB.tierColor,
+                  border: `1px solid ${displayB.tierColor}50`,
                 }}
               >
-                {tierLabels[b.lifestyleTier] ?? b.lifestyleTier}
+                {tierLabels[displayB.lifestyleTier] ?? displayB.lifestyleTier}
               </span>
               <p className="mt-2 font-mono text-2xl font-semibold text-slate-900 dark:text-white">
-                ${fmt(b.discretionary)}
+                ${fmt(displayB.discretionary)}
               </p>
               <p className="text-xs text-slate-500 dark:text-zinc-500">discretionary/mo</p>
             </div>
@@ -666,7 +929,7 @@ export default function LifestylePage() {
           {/* Donut + line items */}
           <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
             <div className="flex items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-4">
-              <DonutChart slices={donutSlices} center={`$${fmt(b.monthlyNet)}`} />
+              <DonutChart slices={donutSlices} center={`$${fmt(displayB.monthlyNet)}`} />
             </div>
 
             <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5">
@@ -674,17 +937,67 @@ export default function LifestylePage() {
                 Monthly Budget Breakdown
               </h3>
               <p className="mb-4 text-xs text-slate-500 dark:text-zinc-500">Click any category for typical real-world prices in this city.</p>
+              {Object.keys(budgetOverrides).length > 0 && (
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-amber-600 dark:text-amber-400">Custom line amounts applied</span>
+                  <button
+                    type="button"
+                    onClick={() => setBudgetOverrides({})}
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    Reset overrides
+                  </button>
+                </div>
+              )}
+              <div className="mb-4 grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ["rent", "Rent / mo"],
+                    ["food", "Food / mo"],
+                    ["transport", "Transport / mo"],
+                    ["healthcare", "Healthcare / mo"],
+                    ["utilities", "Utilities / mo"],
+                    ["insurance", "Insurance / mo"],
+                    ["personal", "Personal / mo"],
+                    ["discretionary", "Discretionary / mo"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key} className="block text-xs text-slate-500 dark:text-zinc-500">
+                    {label} (optional)
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="API value"
+                      value={budgetOverrides[key] !== undefined ? budgetOverrides[key] : ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setBudgetOverrides((prev) => {
+                          const next = { ...prev };
+                          if (v === "") delete next[key];
+                          else {
+                            const n = Number(v);
+                            if (Number.isFinite(n) && n >= 0) next[key] = n;
+                          }
+                          return next;
+                        });
+                      }}
+                      className="mt-0.5 w-full rounded border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2 py-1 font-mono text-sm text-slate-900 dark:text-white"
+                    />
+                  </label>
+                ))}
+              </div>
               <div className="space-y-1">
-                <BudgetRow label={`Rent (${b.rentBedrooms})`} amount={b.rent} color="#3b82f6" total={b.monthlyNet} detail={details?.rent} expanded={expandedRows.has("rent")} onToggle={() => toggleRow("rent")} />
-                <BudgetRow label="Food & Groceries" amount={b.food} color="#22c55e" total={b.monthlyNet} detail={details?.food} expanded={expandedRows.has("food")} onToggle={() => toggleRow("food")} />
-                <BudgetRow label="Transportation" amount={b.transportation} color="#f97316" total={b.monthlyNet} detail={details?.transport} expanded={expandedRows.has("transport")} onToggle={() => toggleRow("transport")} />
-                <BudgetRow label="Healthcare" amount={b.healthcare} color="#ef4444" total={b.monthlyNet} detail={details?.healthcare} expanded={expandedRows.has("healthcare")} onToggle={() => toggleRow("healthcare")} />
-                <BudgetRow label="Utilities" amount={b.utilities} color="#8b5cf6" total={b.monthlyNet} detail={details?.utilities} expanded={expandedRows.has("utilities")} onToggle={() => toggleRow("utilities")} />
-                <BudgetRow label="Insurance" amount={b.insurance} color="#ec4899" total={b.monthlyNet} detail={details?.insurance} expanded={expandedRows.has("insurance")} onToggle={() => toggleRow("insurance")} />
-                <BudgetRow label="Personal & Misc" amount={b.personal} color="#14b8a6" total={b.monthlyNet} detail={details?.personal} expanded={expandedRows.has("personal")} onToggle={() => toggleRow("personal")} />
+                <BudgetRow label={`Rent (${displayB.rentBedrooms})`} amount={displayB.rent} color="#3b82f6" total={displayB.monthlyNet} detail={details?.rent} expanded={expandedRows.has("rent")} onToggle={() => toggleRow("rent")} />
+                <BudgetRow label="Food & Groceries" amount={displayB.food} color="#22c55e" total={displayB.monthlyNet} detail={details?.food} expanded={expandedRows.has("food")} onToggle={() => toggleRow("food")} />
+                <BudgetRow label="Transportation" amount={displayB.transportation} color="#f97316" total={displayB.monthlyNet} detail={details?.transport} expanded={expandedRows.has("transport")} onToggle={() => toggleRow("transport")} />
+                <BudgetRow label="Healthcare" amount={displayB.healthcare} color="#ef4444" total={displayB.monthlyNet} detail={details?.healthcare} expanded={expandedRows.has("healthcare")} onToggle={() => toggleRow("healthcare")} />
+                <BudgetRow label="Utilities" amount={displayB.utilities} color="#8b5cf6" total={displayB.monthlyNet} detail={details?.utilities} expanded={expandedRows.has("utilities")} onToggle={() => toggleRow("utilities")} />
+                <BudgetRow label="Insurance" amount={displayB.insurance} color="#ec4899" total={displayB.monthlyNet} detail={details?.insurance} expanded={expandedRows.has("insurance")} onToggle={() => toggleRow("insurance")} />
+                <BudgetRow label="Personal & Misc" amount={displayB.personal} color="#14b8a6" total={displayB.monthlyNet} detail={details?.personal} expanded={expandedRows.has("personal")} onToggle={() => toggleRow("personal")} />
                 <div className="my-3 border-t border-slate-200 dark:border-zinc-800" />
-                <BudgetRow label="Discretionary" amount={b.discretionary} color="#6b7280" total={b.monthlyNet} bold detail={details?.discretionary} expanded={expandedRows.has("discretionary")} onToggle={() => toggleRow("discretionary")} />
-                <BudgetRow label="Savings capacity" amount={b.savingsCapacity} color="#3b82f6" total={b.monthlyNet} muted />
+                <BudgetRow label="Discretionary" amount={displayB.discretionary} color="#6b7280" total={displayB.monthlyNet} bold detail={details?.discretionary} expanded={expandedRows.has("discretionary")} onToggle={() => toggleRow("discretionary")} />
+                <BudgetRow label="Savings capacity" amount={displayB.savingsCapacity} color="#3b82f6" total={displayB.monthlyNet} muted />
               </div>
             </div>
           </div>
@@ -695,11 +1008,11 @@ export default function LifestylePage() {
               Annual Tax Breakdown
             </h3>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <TaxCard label="Federal" amount={b.federalTax} />
-              <TaxCard label="State" amount={b.stateTax} />
-              <TaxCard label="Local" amount={b.localTax} />
-              <TaxCard label="FICA" amount={b.fica} />
-              <TaxCard label="Total Tax" amount={b.totalTax} highlight />
+              <TaxCard label="Federal" amount={bRaw.federalTax} />
+              <TaxCard label="State" amount={bRaw.stateTax} />
+              <TaxCard label="Local" amount={bRaw.localTax} />
+              <TaxCard label="FICA" amount={bRaw.fica} />
+              <TaxCard label="Total Tax" amount={bRaw.totalTax} highlight />
             </div>
           </div>
 

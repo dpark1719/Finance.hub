@@ -1,5 +1,6 @@
 "use client";
 
+import { useSupabaseUser } from "@/lib/hooks/useSupabaseUser";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   CARS,
@@ -484,6 +485,181 @@ export default function CalculatorsPage() {
     [carTiers],
   );
 
+  const { user, ready, configured } = useSupabaseUser();
+  const [snapName, setSnapName] = useState("");
+  const [snapshots, setSnapshots] = useState<
+    { id: string; name: string; tab: string; updated_at: string }[]
+  >([]);
+  const [snapMsg, setSnapMsg] = useState<string | null>(null);
+
+  const loadSnapshots = useCallback(async () => {
+    if (!user || !configured) return;
+    const res = await fetch("/api/me/calculators");
+    const d = (await res.json()) as { snapshots?: typeof snapshots };
+    if (res.ok && d.snapshots) setSnapshots(d.snapshots);
+  }, [user, configured]);
+
+  useEffect(() => {
+    if (ready && user && configured) void loadSnapshots();
+  }, [ready, user, configured, loadSnapshots]);
+
+  const buildFullPayload = useCallback(() => {
+    return {
+      activeTab: tab,
+      compound: { ciInitialStr, ciMonthlyStr, ciRateStr, ciYearsStr },
+      mortgage: { mHomeStr, mDownPctStr, mRateStr, mTerm },
+      fire: {
+        fireSavingsStr,
+        fireIncomeStr,
+        fireSaveRate,
+        fireReturnStr,
+        fireSpendStr,
+      },
+      debt: { debts, debtExtra },
+      car: {
+        carIncomeStr,
+        carDebtsStr,
+        carDownStr,
+        carCredit,
+        carTermStr,
+        finderOpen,
+        finderTier,
+        finderMake,
+        finderType,
+        finderCondition,
+        finderMaxYear,
+        finderMinYear,
+        finderMaxMileage,
+        finderFuel,
+        finderSort,
+        finderZipStr,
+        showPeerMarketplaces,
+        peerCraigslistSite,
+      },
+    };
+  }, [
+    tab,
+    ciInitialStr,
+    ciMonthlyStr,
+    ciRateStr,
+    ciYearsStr,
+    mHomeStr,
+    mDownPctStr,
+    mRateStr,
+    mTerm,
+    fireSavingsStr,
+    fireIncomeStr,
+    fireSaveRate,
+    fireReturnStr,
+    fireSpendStr,
+    debts,
+    debtExtra,
+    carIncomeStr,
+    carDebtsStr,
+    carDownStr,
+    carCredit,
+    carTermStr,
+    finderOpen,
+    finderTier,
+    finderMake,
+    finderType,
+    finderCondition,
+    finderMaxYear,
+    finderMinYear,
+    finderMaxMileage,
+    finderFuel,
+    finderSort,
+    finderZipStr,
+    showPeerMarketplaces,
+    peerCraigslistSite,
+  ]);
+
+  const applyFullPayload = useCallback((raw: Record<string, unknown>) => {
+    const t = raw.activeTab;
+    if (typeof t === "string" && TABS.some((x) => x.id === t)) setTab(t as TabId);
+
+    const co = raw.compound;
+    if (co && typeof co === "object") {
+      const c = co as Record<string, unknown>;
+      if (typeof c.ciInitialStr === "string") setCiInitialStr(c.ciInitialStr);
+      if (typeof c.ciMonthlyStr === "string") setCiMonthlyStr(c.ciMonthlyStr);
+      if (typeof c.ciRateStr === "string") setCiRateStr(c.ciRateStr);
+      if (typeof c.ciYearsStr === "string") setCiYearsStr(c.ciYearsStr);
+    }
+
+    const mo = raw.mortgage;
+    if (mo && typeof mo === "object") {
+      const m = mo as Record<string, unknown>;
+      if (typeof m.mHomeStr === "string") setMHomeStr(m.mHomeStr);
+      if (typeof m.mDownPctStr === "string") setMDownPctStr(m.mDownPctStr);
+      if (typeof m.mRateStr === "string") setMRateStr(m.mRateStr);
+      if (m.mTerm === 15 || m.mTerm === 30) setMTerm(m.mTerm);
+    }
+
+    const fi = raw.fire;
+    if (fi && typeof fi === "object") {
+      const f = fi as Record<string, unknown>;
+      if (typeof f.fireSavingsStr === "string") setFireSavingsStr(f.fireSavingsStr);
+      if (typeof f.fireIncomeStr === "string") setFireIncomeStr(f.fireIncomeStr);
+      if (typeof f.fireSaveRate === "number") setFireSaveRate(f.fireSaveRate);
+      if (typeof f.fireReturnStr === "string") setFireReturnStr(f.fireReturnStr);
+      if (typeof f.fireSpendStr === "string") setFireSpendStr(f.fireSpendStr);
+    }
+
+    const de = raw.debt;
+    if (de && typeof de === "object") {
+      const d = de as Record<string, unknown>;
+      if (Array.isArray(d.debts)) {
+        const rows = d.debts.filter(
+          (x): x is DebtRow =>
+            x &&
+            typeof x === "object" &&
+            typeof (x as DebtRow).id === "string" &&
+            typeof (x as DebtRow).name === "string",
+        );
+        if (rows.length > 0) setDebts(rows);
+      }
+      if (typeof d.debtExtra === "number") setDebtExtra(d.debtExtra);
+    }
+
+    const ca = raw.car;
+    if (ca && typeof ca === "object") {
+      const c = ca as Record<string, unknown>;
+      if (typeof c.carIncomeStr === "string") setCarIncomeStr(c.carIncomeStr);
+      if (typeof c.carDebtsStr === "string") setCarDebtsStr(c.carDebtsStr);
+      if (typeof c.carDownStr === "string") setCarDownStr(c.carDownStr);
+      if (c.carCredit === "poor" || c.carCredit === "fair" || c.carCredit === "good" || c.carCredit === "excellent")
+        setCarCredit(c.carCredit);
+      if (typeof c.carTermStr === "string") setCarTermStr(c.carTermStr);
+      if (typeof c.finderOpen === "boolean") setFinderOpen(c.finderOpen);
+      if (typeof c.finderTier === "number") setFinderTier(c.finderTier);
+      if (typeof c.finderMake === "string") setFinderMake(c.finderMake);
+      const carTypeVals = CAR_TYPES.map((x) => x.value);
+      if (
+        c.finderType === "any" ||
+        (typeof c.finderType === "string" && carTypeVals.includes(c.finderType as CarType))
+      ) {
+        setFinderType(c.finderType as CarType | "any");
+      }
+      if (c.finderCondition === "new" || c.finderCondition === "used" || c.finderCondition === "any") {
+        setFinderCondition(c.finderCondition);
+      }
+      if (typeof c.finderMaxYear === "number") setFinderMaxYear(c.finderMaxYear);
+      if (typeof c.finderMinYear === "number") setFinderMinYear(c.finderMinYear);
+      if (typeof c.finderMaxMileage === "number") setFinderMaxMileage(c.finderMaxMileage);
+      const ff = c.finderFuel;
+      if (ff === "any" || ff === "gas" || ff === "hybrid" || ff === "electric") {
+        setFinderFuel(ff as FuelType | "any");
+      }
+      if (c.finderSort === "monthly" || c.finderSort === "price" || c.finderSort === "mileage" || c.finderSort === "mpg") {
+        setFinderSort(c.finderSort);
+      }
+      if (typeof c.finderZipStr === "string") setFinderZipStr(c.finderZipStr);
+      if (typeof c.showPeerMarketplaces === "boolean") setShowPeerMarketplaces(c.showPeerMarketplaces);
+      if (typeof c.peerCraigslistSite === "string") setPeerCraigslistSite(c.peerCraigslistSite);
+    }
+  }, []);
+
   const compoundChart = useMemo(() => {
     const { series, years } = compound;
     if (years <= 0) return null;
@@ -518,6 +694,84 @@ export default function CalculatorsPage() {
         <p className="mt-1 text-sm text-slate-600 dark:text-zinc-400">
           Client-side estimates — not financial advice.
         </p>
+
+        {user && configured && (
+          <div className="mt-6 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/90 dark:bg-zinc-900/50 p-4">
+            <p className="text-xs font-medium text-slate-800 dark:text-zinc-200">Saved calculator setups</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">
+              Saves all tabs (compound, mortgage, FIRE, debt, car) in one snapshot.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <input
+                type="text"
+                value={snapName}
+                onChange={(e) => setSnapName(e.target.value)}
+                placeholder="Snapshot name"
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white sm:max-w-xs"
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  const name = snapName.trim();
+                  if (!name) return;
+                  setSnapMsg(null);
+                  const payload = buildFullPayload();
+                  const res = await fetch("/api/me/calculators", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, tab: payload.activeTab, payload }),
+                  });
+                  const data = (await res.json()) as { error?: string };
+                  if (!res.ok) {
+                    setSnapMsg(data.error ?? "Save failed");
+                    return;
+                  }
+                  setSnapName("");
+                  setSnapMsg("Saved.");
+                  void loadSnapshots();
+                }}
+                className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-500"
+              >
+                Save snapshot
+              </button>
+            </div>
+            {snapMsg && <p className="mt-2 text-xs text-slate-600 dark:text-zinc-400">{snapMsg}</p>}
+            {snapshots.length > 0 && (
+              <ul className="mt-3 space-y-1 text-xs">
+                {snapshots.map((s) => (
+                  <li key={s.id} className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="text-left font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                      onClick={async () => {
+                        const res = await fetch(`/api/me/calculators/${s.id}`);
+                        const data = (await res.json()) as {
+                          snapshot?: { payload?: Record<string, unknown> };
+                        };
+                        const p = data.snapshot?.payload;
+                        if (p && typeof p === "object") applyFullPayload(p);
+                        setSnapMsg(`Loaded “${s.name}”.`);
+                      }}
+                    >
+                      {s.name}
+                    </button>
+                    <span className="text-slate-500 dark:text-zinc-500">({s.tab})</span>
+                    <button
+                      type="button"
+                      className="text-red-400 hover:underline"
+                      onClick={async () => {
+                        await fetch(`/api/me/calculators/${s.id}`, { method: "DELETE" });
+                        void loadSnapshots();
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 flex flex-wrap gap-2">
           {TABS.map((t) => (

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useSupabaseUser } from "@/lib/hooks/useSupabaseUser";
+import { debounce } from "@/lib/debounce";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type CreditCard = {
   id: number;
@@ -47,6 +49,63 @@ export default function CreditCardsPage() {
   const [cards, setCards] = useState<CreditCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user, ready, configured } = useSupabaseUser();
+  const [savedCardIds, setSavedCardIds] = useState<Set<string>>(new Set());
+  const [savingsIdsMirror, setSavingsIdsMirror] = useState<string[]>([]);
+  const savingsIdsRef = useRef<string[]>([]);
+  const bookmarksReady = useRef(false);
+
+  useEffect(() => {
+    savingsIdsRef.current = savingsIdsMirror;
+  }, [savingsIdsMirror]);
+
+  const persistBookmarks = useMemo(
+    () =>
+      debounce((savingsIds: string[], cardIds: string[]) => {
+        void fetch("/api/me/bookmarks", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ savingsIds, cardIds }),
+        }).catch(() => {});
+      }, 550),
+    [],
+  );
+
+  useEffect(() => {
+    if (!ready || !user || !configured) {
+      bookmarksReady.current = false;
+      return;
+    }
+    let cancelled = false;
+    void fetch("/api/me/bookmarks")
+      .then((r) => r.json())
+      .then((d: { savingsIds?: string[]; cardIds?: string[] }) => {
+        if (cancelled) return;
+        setSavingsIdsMirror(d.savingsIds ?? []);
+        setSavedCardIds(new Set(d.cardIds ?? []));
+        bookmarksReady.current = true;
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, user, configured]);
+
+  const toggleSavedCard = useCallback(
+    (id: number) => {
+      const sid = String(id);
+      setSavedCardIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(sid)) next.delete(sid);
+        else next.add(sid);
+        if (bookmarksReady.current && user && configured) {
+          persistBookmarks(savingsIdsRef.current, [...next]);
+        }
+        return next;
+      });
+    },
+    [persistBookmarks, user, configured],
+  );
+
   const [q, setQ] = useState("");
   const [biz, setBiz] = useState<BizFilter>("all");
   const [reward, setReward] = useState<RewardFilter>("all");
@@ -138,6 +197,11 @@ export default function CreditCardsPage() {
           place—filter by personal or business cards and how you prefer to earn
           rewards.
         </p>
+        {user && configured && (
+          <p className="mt-2 text-xs text-slate-500 dark:text-zinc-500">
+            Star cards while signed in to save them to your profile.
+          </p>
+        )}
       </header>
 
       <section className="mb-8 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/60 p-4">
@@ -277,6 +341,21 @@ export default function CreditCardsPage() {
                 style={{ backgroundColor: "var(--card)" }}
               >
                 <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {user && configured && (
+                    <button
+                      type="button"
+                      onClick={() => toggleSavedCard(c.id)}
+                      className={`shrink-0 rounded-md p-1 text-lg leading-none ${
+                        savedCardIds.has(String(c.id))
+                          ? "text-amber-400"
+                          : "text-slate-400 dark:text-zinc-600"
+                      }`}
+                      aria-label={savedCardIds.has(String(c.id)) ? "Remove from saved" : "Save card"}
+                      title={savedCardIds.has(String(c.id)) ? "Saved" : "Save"}
+                    >
+                      {savedCardIds.has(String(c.id)) ? "★" : "☆"}
+                    </button>
+                  )}
                   <span
                     className={`inline-flex max-w-full truncate rounded-md px-2 py-0.5 text-xs font-semibold ${issuerChipClass(c.issuer)}`}
                   >

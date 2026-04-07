@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthMenu } from "@/components/AuthMenu";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -58,6 +59,7 @@ export function NavBar() {
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <ThemeToggle />
+          <AuthMenu />
           <button
             type="button"
             onClick={() => setOpen(!open)}

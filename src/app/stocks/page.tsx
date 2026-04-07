@@ -1,6 +1,7 @@
 "use client";
 
 import type { LetterGrade, StockReport } from "@/types/report";
+import { WatchlistsPanel } from "@/components/WatchlistsPanel";
 import dynamic from "next/dynamic";
 import { useCallback, useState } from "react";
 
@@ -43,6 +44,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<StockReport | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [watchAddRequest, setWatchAddRequest] = useState(0);
 
   const run = useCallback(async (symbolOverride?: string) => {
     const symbol = (symbolOverride ?? q).trim();
@@ -118,8 +120,19 @@ export default function Home() {
           >
             {loading ? "Loading…" : "Run report"}
           </button>
+          <button
+            type="button"
+            onClick={() => setWatchAddRequest((n) => n + 1)}
+            disabled={!q.trim()}
+            title="Adds the ticker in the search box to your active watchlist when signed in"
+            className="touch-manipulation shrink-0 rounded-lg border border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-800 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Watchlist +
+          </button>
         </div>
       </header>
+
+      <WatchlistsPanel addRequest={watchAddRequest} tickerToAdd={q} />
 
       <Sp500Heatmap onSelectSymbol={onHeatmapSymbol} />
 

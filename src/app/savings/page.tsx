@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useSupabaseUser } from "@/lib/hooks/useSupabaseUser";
+import { debounce } from "@/lib/debounce";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Account = {
   id: string;
@@ -61,6 +63,61 @@ export default function SavingsPage() {
   const [sortKey, setSortKey] = useState<SortKey>("apy");
   const [sortDir, setSortDir] = useState<1 | -1>(-1);
   const [err, setErr] = useState<string | null>(null);
+  const { user, ready, configured } = useSupabaseUser();
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [cardIdsMirror, setCardIdsMirror] = useState<string[]>([]);
+  const cardIdsRef = useRef<string[]>([]);
+  const bookmarksReady = useRef(false);
+
+  useEffect(() => {
+    cardIdsRef.current = cardIdsMirror;
+  }, [cardIdsMirror]);
+
+  const persistSavingsBookmarks = useMemo(
+    () =>
+      debounce((savingsIds: string[], cardIds: string[]) => {
+        void fetch("/api/me/bookmarks", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ savingsIds, cardIds }),
+        }).catch(() => {});
+      }, 550),
+    [],
+  );
+
+  useEffect(() => {
+    if (!ready || !user || !configured) {
+      bookmarksReady.current = false;
+      return;
+    }
+    let cancelled = false;
+    void fetch("/api/me/bookmarks")
+      .then((r) => r.json())
+      .then((d: { savingsIds?: string[]; cardIds?: string[] }) => {
+        if (cancelled) return;
+        setSavedIds(new Set(d.savingsIds ?? []));
+        setCardIdsMirror(d.cardIds ?? []);
+        bookmarksReady.current = true;
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, user, configured]);
+
+  const toggleSaved = useCallback(
+    (accountId: string) => {
+      setSavedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(accountId)) next.delete(accountId);
+        else next.add(accountId);
+        if (bookmarksReady.current && user && configured) {
+          persistSavingsBookmarks([...next], cardIdsRef.current);
+        }
+        return next;
+      });
+    },
+    [persistSavingsBookmarks, user, configured],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -120,6 +177,11 @@ export default function SavingsPage() {
           insurance — curated static sample for UI demo; confirm rates and terms
           with each institution before opening an account.
         </p>
+        {user && configured && (
+          <p className="mt-2 text-xs text-slate-500 dark:text-zinc-500">
+            Star accounts while signed in to save them to your profile (syncs automatically).
+          </p>
+        )}
       </header>
 
       <div
@@ -171,7 +233,22 @@ export default function SavingsPage() {
             key={row.id}
             className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-4 sm:grid sm:grid-cols-[1.2fr_0.9fr_0.85fr_0.75fr_0.5fr_1.4fr] sm:items-center sm:gap-3"
           >
-            <div className="font-medium text-slate-900 dark:text-white sm:pl-0">{row.bank}</div>
+            <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-white sm:pl-0">
+              {user && configured && (
+                <button
+                  type="button"
+                  onClick={() => toggleSaved(row.id)}
+                  className={`shrink-0 rounded-md p-1 text-lg leading-none ${
+                    savedIds.has(row.id) ? "text-amber-400" : "text-slate-400 dark:text-zinc-600"
+                  }`}
+                  aria-label={savedIds.has(row.id) ? "Remove from saved" : "Save account"}
+                  title={savedIds.has(row.id) ? "Saved" : "Save"}
+                >
+                  {savedIds.has(row.id) ? "★" : "☆"}
+                </button>
+              )}
+              {row.bank}
+            </div>
             <div
               className="mt-2 text-2xl font-semibold tabular-nums sm:mt-0 sm:text-3xl"
               style={{ color: apyColor(row.apy, minApy, maxApy) }}

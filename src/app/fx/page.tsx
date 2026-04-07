@@ -1,5 +1,7 @@
 "use client";
 
+import { useSupabaseUser } from "@/lib/hooks/useSupabaseUser";
+import { debounce } from "@/lib/debounce";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type FxHistory = {
@@ -297,6 +299,115 @@ export default function FxPage() {
   const [historyLoadingUsdKrw, setHistoryLoadingUsdKrw] = useState(false);
   const [historyLoadingKrwJpy, setHistoryLoadingKrwJpy] = useState(false);
 
+  const { user, ready, configured } = useSupabaseUser();
+  const [favoritePairs, setFavoritePairs] = useState<{ from: string; to: string }[]>([]);
+  const prefsHydrating = useRef(true);
+
+  const saveFxPrefs = useMemo(
+    () =>
+      debounce((payload: Record<string, unknown>) => {
+        void fetch("/api/me/fx", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ payload }),
+        }).catch(() => {});
+      }, 700),
+    [],
+  );
+
+  useEffect(() => {
+    if (!ready || !user || !configured) {
+      prefsHydrating.current = true;
+      return;
+    }
+    let cancelled = false;
+    prefsHydrating.current = true;
+    void fetch("/api/me/fx")
+      .then((r) => r.json())
+      .then((d: { payload?: Record<string, unknown> }) => {
+        if (cancelled) return;
+        const p = d.payload ?? {};
+        if (typeof p.amountStr === "string") setAmountStr(p.amountStr);
+        const pf = p.from;
+        const pt = p.to;
+        if (typeof pf === "string" && (CURRENCIES as readonly string[]).includes(pf)) setFrom(pf);
+        if (typeof pt === "string" && (CURRENCIES as readonly string[]).includes(pt)) setTo(pt);
+        if (typeof p.rangeUsdJpy === "string") setRangeUsdJpy(p.rangeUsdJpy as FxRange);
+        if (typeof p.rangeUsdKrw === "string") setRangeUsdKrw(p.rangeUsdKrw as FxRange);
+        if (typeof p.rangeKrwJpy === "string") setRangeKrwJpy(p.rangeKrwJpy as FxRange);
+        if (Array.isArray(p.favoritePairs)) {
+          const pairs: { from: string; to: string }[] = [];
+          for (const x of p.favoritePairs) {
+            if (!x || typeof x !== "object") continue;
+            const o = x as { from?: string; to?: string };
+            if (
+              typeof o.from === "string" &&
+              typeof o.to === "string" &&
+              (CURRENCIES as readonly string[]).includes(o.from) &&
+              (CURRENCIES as readonly string[]).includes(o.to) &&
+              o.from !== o.to
+            ) {
+              pairs.push({ from: o.from, to: o.to });
+            }
+          }
+          setFavoritePairs(pairs);
+        }
+        requestAnimationFrame(() => {
+          prefsHydrating.current = false;
+        });
+      })
+      .catch(() => {
+        prefsHydrating.current = false;
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, user, configured]);
+
+  useEffect(() => {
+    if (!ready || !user || !configured) return;
+    if (prefsHydrating.current) return;
+    saveFxPrefs({
+      amountStr,
+      from,
+      to,
+      rangeUsdJpy,
+      rangeUsdKrw,
+      rangeKrwJpy,
+      favoritePairs,
+    });
+  }, [
+    amountStr,
+    from,
+    to,
+    rangeUsdJpy,
+    rangeUsdKrw,
+    rangeKrwJpy,
+    favoritePairs,
+    ready,
+    user,
+    configured,
+    saveFxPrefs,
+  ]);
+
+  const addFavoritePair = useCallback(() => {
+    if (from === to) return;
+    setFavoritePairs((prev) => {
+      const key = `${from}/${to}`;
+      if (prev.some((p) => `${p.from}/${p.to}` === key)) return prev;
+      return [...prev, { from, to }];
+    });
+  }, [from, to]);
+
+  const applyFavorite = useCallback((f: { from: string; to: string }) => {
+    setFrom(f.from);
+    setTo(f.to);
+  }, []);
+
+  const removeFavorite = useCallback((f: { from: string; to: string }) => {
+    setFavoritePairs((prev) => prev.filter((p) => !(p.from === f.from && p.to === f.to)));
+  }, []);
+
   const loadGrid = useCallback(async () => {
     setGridLoading(true);
     setGridError(null);
@@ -574,6 +685,51 @@ export default function FxPage() {
             <p className="mt-2 text-xs text-slate-500 dark:text-zinc-500">
               Rate date: {result?.date ?? "—"} · Base {result?.base ?? "—"}
             </p>
+          </div>
+        )}
+
+        {user && configured && (
+          <div className="mt-6 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-900/40 p-4">
+            <p className="text-xs font-medium text-slate-600 dark:text-zinc-400">Saved to your account</p>
+            <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">
+              Converter settings and chart ranges sync automatically when signed in.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={addFavoritePair}
+                disabled={from === to}
+                className="rounded-lg border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-slate-800 dark:text-zinc-200 hover:bg-slate-100 dark:hover:bg-zinc-800 disabled:opacity-40"
+              >
+                Save {from}/{to} to favorites
+              </button>
+            </div>
+            {favoritePairs.length > 0 && (
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {favoritePairs.map((f) => (
+                  <li
+                    key={`${f.from}-${f.to}`}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2 py-1 font-mono text-xs"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => applyFavorite(f)}
+                      className="text-slate-800 dark:text-zinc-200 hover:underline"
+                    >
+                      {f.from}/{f.to}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeFavorite(f)}
+                      className="text-slate-500 hover:text-red-400"
+                      aria-label="Remove favorite"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </section>
