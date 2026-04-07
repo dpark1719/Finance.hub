@@ -42,19 +42,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html lang="en" className="min-h-dvh min-w-0" suppressHydrationWarning>
       <head>
         <ThemeInitScript />
       </head>
       <body
-        className={`${dmSans.variable} ${plexMono.variable} min-h-full min-w-0 font-sans antialiased`}
+        className={`${dmSans.variable} ${plexMono.variable} min-h-dvh min-w-0 font-sans antialiased`}
         style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}
       >
-        <div className="flex min-h-full min-w-0 flex-col">
+        {/* AiAssistLauncher stays outside the flex column so WebKit/Safari does not reserve a flex slot for the fixed FAB (avoids extra scroll / blank strip). */}
+        <div className="flex min-h-dvh min-w-0 flex-col">
           <NavBar />
-          <div className="min-w-0 flex-1">{children}</div>
-          <AiAssistLauncher />
+          <div className="min-w-0 min-h-0 flex-1">{children}</div>
         </div>
+        <AiAssistLauncher />
       </body>
     </html>
   );
