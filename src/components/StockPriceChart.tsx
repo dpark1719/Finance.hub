@@ -76,11 +76,11 @@ export function StockPriceChart({ symbol }: { symbol: string }) {
   }, [symbol, range, load]);
 
   return (
-    <section className="rounded-xl border border-zinc-800 bg-[var(--card)] p-4 sm:p-5">
+    <section className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-4 sm:p-5">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-base font-semibold text-white">Price</h3>
-          <p className="text-xs text-zinc-500">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Price</h3>
+          <p className="text-xs text-slate-500 dark:text-zinc-500">
             Yahoo Finance intraday/daily history (ranges as on Yahoo).
           </p>
         </div>
@@ -93,7 +93,7 @@ export function StockPriceChart({ symbol }: { symbol: string }) {
               className={`touch-manipulation rounded-md border px-2.5 py-2 font-mono text-xs font-medium transition sm:py-1 ${
                 range === k
                   ? "border-blue-500/60 bg-blue-600/25 text-blue-200"
-                  : "border-zinc-700 bg-zinc-900/60 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+                  : "border-slate-300 dark:border-zinc-700 bg-white/95 dark:bg-zinc-900/60 text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:border-zinc-600 hover:text-slate-800 dark:text-zinc-200"
               }`}
             >
               {YAHOO_CHART_PRESETS[k].label}
@@ -110,11 +110,11 @@ export function StockPriceChart({ symbol }: { symbol: string }) {
 
       <div className="h-[240px] w-full min-w-0 sm:h-[280px]" aria-busy={loading}>
         {loading && points.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+          <div className="flex h-full items-center justify-center text-sm text-slate-500 dark:text-zinc-500">
             Loading chart…
           </div>
         ) : points.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+          <div className="flex h-full items-center justify-center text-sm text-slate-500 dark:text-zinc-500">
             No price data for this symbol.
           </div>
         ) : (

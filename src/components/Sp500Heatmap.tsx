@@ -65,9 +65,9 @@ function HeatTooltip({ active, payload }: TooltipProps<number, string>) {
   const isStockTile = Boolean(raw?.searchSymbol);
   if (!isStockTile) {
     return (
-      <div className="max-w-xs rounded-lg border border-zinc-600 bg-zinc-950/95 px-3 py-2 text-xs text-zinc-200 shadow-xl backdrop-blur-sm">
-        <p className="font-semibold uppercase tracking-wide text-zinc-400">{raw?.name}</p>
-        <p className="mt-1 text-zinc-500">Sector / industry group</p>
+      <div className="max-w-xs rounded-lg border border-slate-300 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-950/95 px-3 py-2 text-xs text-slate-800 dark:text-zinc-200 shadow-xl backdrop-blur-sm">
+        <p className="font-semibold uppercase tracking-wide text-slate-600 dark:text-zinc-400">{raw?.name}</p>
+        <p className="mt-1 text-slate-500 dark:text-zinc-500">Sector / industry group</p>
       </div>
     );
   }
@@ -79,21 +79,21 @@ function HeatTooltip({ active, payload }: TooltipProps<number, string>) {
   const sym = raw.searchSymbol ?? "";
   const title = company || sym;
   return (
-    <div className="max-w-sm rounded-lg border border-zinc-600 bg-zinc-950/95 px-3 py-2.5 text-xs text-zinc-100 shadow-xl backdrop-blur-sm">
-      <p className="text-sm font-semibold leading-snug text-white">{title}</p>
+    <div className="max-w-sm rounded-lg border border-slate-300 dark:border-zinc-600 bg-slate-50 dark:bg-zinc-950/95 px-3 py-2.5 text-xs text-slate-800 dark:text-zinc-100 shadow-xl backdrop-blur-sm">
+      <p className="text-sm font-semibold leading-snug text-slate-900 dark:text-white">{title}</p>
       {company ? (
-        <p className="mt-1 font-mono text-[11px] text-zinc-500">{sym}</p>
+        <p className="mt-1 font-mono text-[11px] text-slate-500 dark:text-zinc-500">{sym}</p>
       ) : null}
-      <p className="mt-1.5 tabular-nums text-zinc-300">
-        <span className="text-zinc-500">O</span> {fmtPx(raw.o ?? null)}
+      <p className="mt-1.5 tabular-nums text-slate-700 dark:text-zinc-300">
+        <span className="text-slate-500 dark:text-zinc-500">O</span> {fmtPx(raw.o ?? null)}
         {" · "}
-        <span className="text-zinc-500">H</span> {fmtPx(raw.h ?? null)}
+        <span className="text-slate-500 dark:text-zinc-500">H</span> {fmtPx(raw.h ?? null)}
         {" · "}
-        <span className="text-zinc-500">L</span> {fmtPx(raw.l ?? null)}
+        <span className="text-slate-500 dark:text-zinc-500">L</span> {fmtPx(raw.l ?? null)}
         {" · "}
-        <span className="text-zinc-500">C</span> {fmtPx(raw.c ?? null)}
+        <span className="text-slate-500 dark:text-zinc-500">C</span> {fmtPx(raw.c ?? null)}
       </p>
-      <p className="mt-1.5 font-mono tabular-nums text-zinc-200">Day {chStr}</p>
+      <p className="mt-1.5 font-mono tabular-nums text-slate-800 dark:text-zinc-200">Day {chStr}</p>
     </div>
   );
 }
@@ -126,10 +126,6 @@ function HeatmapCell({
   name,
   children,
   changePct,
-  o,
-  h,
-  l,
-  c,
   searchSymbol,
   isLeaf: isLeafFlag,
   onLeafClick,
@@ -147,15 +143,14 @@ function HeatmapCell({
           y={y}
           width={width}
           height={height}
-          fill="#0c0c0e"
-          stroke="#27272a"
+          className="fill-slate-200 stroke-slate-300 dark:fill-[#0c0c0e] dark:stroke-zinc-800"
           strokeWidth={1}
         />
         {width > 50 && height > fs + 6 && branchLabel && (
           <text
             x={x + 6}
             y={y + fs + 2}
-            fill="#a1a1aa"
+            className="fill-slate-600 dark:fill-[#a1a1aa]"
             fontSize={fs}
             fontWeight={600}
             style={{ textTransform: "uppercase", letterSpacing: "0.04em" }}
@@ -290,20 +285,20 @@ export function Sp500Heatmap({
   );
 
   return (
-    <section className="mt-10 border-t border-zinc-800 pt-10">
+    <section className="mt-10 border-t border-slate-200 dark:border-zinc-800 pt-10">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-white">S&amp;P 500 heatmap</h2>
-          <p className="mt-1 max-w-2xl text-sm text-zinc-500">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">S&amp;P 500 heatmap</h2>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-500">
             Block size ≈ market cap (Yahoo). Color = day change %. Hover a stock for OHLC;
             click to run the report. Data refreshes about every hour.
           </p>
         </div>
         {generatedAt && (
-          <p className="font-mono text-xs text-zinc-600">
+          <p className="font-mono text-xs text-slate-600 dark:text-zinc-600">
             Updated {new Date(generatedAt).toLocaleString()}
             {refreshAfter && (
-              <span className="block text-zinc-700 sm:inline sm:before:content-['·_']">
+              <span className="block text-slate-600 dark:text-zinc-700 sm:inline sm:before:content-['·_']">
                 Next refresh ~ {new Date(refreshAfter).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </span>
             )}
@@ -313,7 +308,7 @@ export function Sp500Heatmap({
 
       {error && (
         <div
-          className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+          className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/30 dark:text-amber-100"
           role="alert"
         >
           {error}
@@ -321,20 +316,20 @@ export function Sp500Heatmap({
       )}
 
       {loading && tree.length === 0 && !error && (
-        <div className="flex h-[520px] items-center justify-center rounded-xl border border-zinc-800 bg-zinc-950/50 text-sm text-zinc-500">
+        <div className="flex h-[520px] items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/50 text-sm text-slate-500 dark:text-zinc-500">
           Loading heatmap…
         </div>
       )}
 
       {!loading && tree.length === 0 && !error && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-4 py-8 text-center text-sm text-zinc-500">
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/50 px-4 py-8 text-center text-sm text-slate-500 dark:text-zinc-500">
           No heatmap data.
         </div>
       )}
 
       {tree.length > 0 && (
         <div
-          className="w-full rounded-xl border border-zinc-800 bg-[#050506] p-1 sm:p-2"
+          className="w-full rounded-xl border border-slate-300 dark:border-zinc-800 bg-slate-200 dark:bg-[#050506] p-1 sm:p-2"
           style={{ height: "min(70vh, 640px)", minHeight: 480 }}
         >
           <ResponsiveContainer width="100%" height="100%">
@@ -352,7 +347,7 @@ export function Sp500Heatmap({
         </div>
       )}
 
-      <p className="mt-3 text-center text-[11px] text-zinc-600">
+      <p className="mt-3 text-center text-[11px] text-slate-600 dark:text-zinc-600">
         Red = down · green = up · gray = missing change. Yahoo Finance via server batch quotes.
       </p>
     </section>

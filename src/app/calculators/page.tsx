@@ -510,23 +510,12 @@ export default function CalculatorsPage() {
   }, [compound]);
 
   return (
-    <main
-      className="min-h-screen min-w-0 text-white"
-      style={
-        {
-          backgroundColor: "var(--background, #0c0f14)",
-          color: "var(--foreground, #e8eaed)",
-          ["--background" as string]: "#0c0f14",
-          ["--card" as string]: "#151a22",
-          ["--foreground" as string]: "#e8eaed",
-        } as CSSProperties
-      }
-    >
+    <main className="min-h-screen min-w-0 text-slate-900 dark:text-white">
       <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           Financial calculators
         </h1>
-        <p className="mt-1 text-sm text-zinc-400">
+        <p className="mt-1 text-sm text-slate-600 dark:text-zinc-400">
           Client-side estimates — not financial advice.
         </p>
 
@@ -539,7 +528,7 @@ export default function CalculatorsPage() {
               className={`touch-manipulation rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 sm:py-2 ${
                 tab === t.id
                   ? "bg-blue-600 text-white"
-                  : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  : "bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:text-zinc-200"
               }`}
             >
               {t.label}
@@ -551,44 +540,44 @@ export default function CalculatorsPage() {
         {tab === "compound" && (
           <section className="mt-8 grid gap-8 lg:grid-cols-2 lg:items-start">
             <div
-              className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
               style={{ ["--card" as string]: "#151a22" } as CSSProperties}
             >
               <h2 className="text-lg font-semibold">Inputs</h2>
               <div className="mt-4 space-y-4">
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Initial amount ($)</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Initial amount ($)</span>
                   <input
                     type="number"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={ciInitialStr}
                     onChange={(e) => setCiInitialStr(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Monthly contribution ($)</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Monthly contribution ($)</span>
                   <input
                     type="number"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={ciMonthlyStr}
                     onChange={(e) => setCiMonthlyStr(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Annual interest rate (%)</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Annual interest rate (%)</span>
                   <input
                     type="number"
                     step="0.01"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={ciRateStr}
                     onChange={(e) => setCiRateStr(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Years</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Years</span>
                   <input
                     type="number"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={ciYearsStr}
                     onChange={(e) => setCiYearsStr(e.target.value)}
                   />
@@ -597,23 +586,23 @@ export default function CalculatorsPage() {
             </div>
 
             <div
-              className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
               style={{ ["--card" as string]: "#151a22" } as CSSProperties}
             >
               <h2 className="text-lg font-semibold">Results</h2>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-1">
-                <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                  <dt className="text-zinc-400">Final balance</dt>
+                <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
+                  <dt className="text-slate-600 dark:text-zinc-400">Final balance</dt>
                   <dd className="font-mono text-lg font-medium">
                     ${formatMoney(compound.final)}
                   </dd>
                 </div>
-                <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                  <dt className="text-zinc-400">Total contributions</dt>
+                <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
+                  <dt className="text-slate-600 dark:text-zinc-400">Total contributions</dt>
                   <dd className="font-mono">${formatMoney(compound.totalContrib)}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-zinc-400">Total interest earned</dt>
+                  <dt className="text-slate-600 dark:text-zinc-400">Total interest earned</dt>
                   <dd className="font-mono text-emerald-400">
                     ${formatMoney(compound.totalInterest)}
                   </dd>
@@ -622,7 +611,7 @@ export default function CalculatorsPage() {
 
               {compoundChart && compound.years > 0 && (
                 <div className="mt-6">
-                  <p className="text-sm text-zinc-400">Growth over time</p>
+                  <p className="text-sm text-slate-600 dark:text-zinc-400">Growth over time</p>
                   <svg
                     viewBox={`0 0 ${compoundChart.w} ${compoundChart.h}`}
                     className="mt-2 h-auto w-full max-w-full"
@@ -671,12 +660,12 @@ export default function CalculatorsPage() {
                       {compound.years} yr
                     </text>
                   </svg>
-                  <div className="mt-2 flex gap-4 text-xs text-zinc-500">
+                  <div className="mt-2 flex gap-4 text-xs text-slate-500 dark:text-zinc-500">
                     <span className="flex items-center gap-1">
                       <span className="inline-block h-0.5 w-6 bg-blue-600" /> Balance
                     </span>
                     <span className="flex items-center gap-1">
-                      <span className="inline-block h-0.5 w-6 border-t border-dashed border-zinc-500" />{" "}
+                      <span className="inline-block h-0.5 w-6 border-t border-dashed border-slate-300 dark:border-zinc-500" />{" "}
                       Contributions
                     </span>
                   </div>
@@ -690,42 +679,42 @@ export default function CalculatorsPage() {
         {tab === "mortgage" && (
           <section className="mt-8 grid gap-8 lg:grid-cols-2 lg:items-start">
             <div
-              className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
               style={{ ["--card" as string]: "#151a22" } as CSSProperties}
             >
               <h2 className="text-lg font-semibold">Inputs</h2>
               <div className="mt-4 space-y-4">
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Home price ($)</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Home price ($)</span>
                   <input
                     type="number"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={mHomeStr}
                     onChange={(e) => setMHomeStr(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Down payment (%)</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Down payment (%)</span>
                   <input
                     type="number"
                     step="0.1"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={mDownPctStr}
                     onChange={(e) => setMDownPctStr(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Interest rate (%)</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Interest rate (%)</span>
                   <input
                     type="number"
                     step="0.01"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={mRateStr}
                     onChange={(e) => setMRateStr(e.target.value)}
                   />
                 </label>
                 <fieldset>
-                  <legend className="text-sm text-zinc-400">Loan term</legend>
+                  <legend className="text-sm text-slate-600 dark:text-zinc-400">Loan term</legend>
                   <div className="mt-2 flex gap-4">
                     <label className="flex cursor-pointer items-center gap-2 text-sm">
                       <input
@@ -753,64 +742,64 @@ export default function CalculatorsPage() {
             </div>
 
             <div
-              className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
               style={{ ["--card" as string]: "#151a22" } as CSSProperties}
             >
               <h2 className="text-lg font-semibold">Results</h2>
               <dl className="mt-4 space-y-3 text-sm">
-                <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                  <dt className="text-zinc-400">Loan amount</dt>
+                <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
+                  <dt className="text-slate-600 dark:text-zinc-400">Loan amount</dt>
                   <dd className="font-mono">${formatMoney(mortgage.loan)}</dd>
                 </div>
-                <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                  <dt className="text-zinc-400">Monthly payment</dt>
+                <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
+                  <dt className="text-slate-600 dark:text-zinc-400">Monthly payment</dt>
                   <dd className="font-mono text-lg font-medium">
                     ${formatMoney2(mortgage.payment)}
                   </dd>
                 </div>
-                <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                  <dt className="text-zinc-400">Total interest</dt>
+                <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
+                  <dt className="text-slate-600 dark:text-zinc-400">Total interest</dt>
                   <dd className="font-mono">${formatMoney(mortgage.totalInterest)}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-zinc-400">Total cost (loan + down)</dt>
+                  <dt className="text-slate-600 dark:text-zinc-400">Total cost (loan + down)</dt>
                   <dd className="font-mono">${formatMoney(mortgage.totalCost)}</dd>
                 </div>
               </dl>
 
-              <div className="mt-6 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
-                <h3 className="text-sm font-medium text-zinc-300">Amortization summary</h3>
+              <div className="mt-6 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4">
+                <h3 className="text-sm font-medium text-slate-700 dark:text-zinc-300">Amortization summary</h3>
                 <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-zinc-500">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                       First year
                     </p>
-                    <p className="mt-1 text-zinc-400">
+                    <p className="mt-1 text-slate-600 dark:text-zinc-400">
                       Interest:{" "}
-                      <span className="font-mono text-white">
+                      <span className="font-mono text-slate-900 dark:text-white">
                         ${formatMoney(mortgage.slices.firstYearInterest)}
                       </span>
                     </p>
-                    <p className="text-zinc-400">
+                    <p className="text-slate-600 dark:text-zinc-400">
                       Principal:{" "}
-                      <span className="font-mono text-white">
+                      <span className="font-mono text-slate-900 dark:text-white">
                         ${formatMoney(mortgage.slices.firstYearPrincipal)}
                       </span>
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-zinc-500">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                       Last year
                     </p>
-                    <p className="mt-1 text-zinc-400">
+                    <p className="mt-1 text-slate-600 dark:text-zinc-400">
                       Interest:{" "}
-                      <span className="font-mono text-white">
+                      <span className="font-mono text-slate-900 dark:text-white">
                         ${formatMoney(mortgage.slices.lastYearInterest)}
                       </span>
                     </p>
-                    <p className="text-zinc-400">
+                    <p className="text-slate-600 dark:text-zinc-400">
                       Principal:{" "}
-                      <span className="font-mono text-white">
+                      <span className="font-mono text-slate-900 dark:text-white">
                         ${formatMoney(mortgage.slices.lastYearPrincipal)}
                       </span>
                     </p>
@@ -825,33 +814,33 @@ export default function CalculatorsPage() {
         {tab === "fire" && (
           <section className="mt-8 grid gap-8 lg:grid-cols-2 lg:items-start">
             <div
-              className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
               style={{ ["--card" as string]: "#151a22" } as CSSProperties}
             >
               <h2 className="text-lg font-semibold">Inputs</h2>
               <div className="mt-4 space-y-4">
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Current savings ($)</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Current savings ($)</span>
                   <input
                     type="number"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={fireSavingsStr}
                     onChange={(e) => setFireSavingsStr(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Annual income ($)</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Annual income ($)</span>
                   <input
                     type="number"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={fireIncomeStr}
                     onChange={(e) => setFireIncomeStr(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="flex justify-between text-sm text-zinc-400">
+                  <span className="flex justify-between text-sm text-slate-600 dark:text-zinc-400">
                     <span>Savings rate</span>
-                    <span className="font-mono text-white">{fireSaveRate}%</span>
+                    <span className="font-mono text-slate-900 dark:text-white">{fireSaveRate}%</span>
                   </span>
                   <input
                     type="range"
@@ -863,22 +852,22 @@ export default function CalculatorsPage() {
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm text-zinc-400">Expected annual return (%)</span>
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">Expected annual return (%)</span>
                   <input
                     type="number"
                     step="0.1"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={fireReturnStr}
                     onChange={(e) => setFireReturnStr(e.target.value)}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm text-zinc-400">
+                  <span className="text-sm text-slate-600 dark:text-zinc-400">
                     Annual spending in retirement ($)
                   </span>
                   <input
                     type="number"
-                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500"
                     value={fireSpendStr}
                     onChange={(e) => setFireSpendStr(e.target.value)}
                   />
@@ -887,21 +876,21 @@ export default function CalculatorsPage() {
             </div>
 
             <div
-              className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
               style={{ ["--card" as string]: "#151a22" } as CSSProperties}
             >
               <h2 className="text-lg font-semibold">Results</h2>
               <dl className="mt-4 space-y-3 text-sm">
-                <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                  <dt className="text-zinc-400">Target nest egg (25× spending)</dt>
+                <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
+                  <dt className="text-slate-600 dark:text-zinc-400">Target nest egg (25× spending)</dt>
                   <dd className="font-mono">${formatMoney(fire.target)}</dd>
                 </div>
-                <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                  <dt className="text-zinc-400">Monthly savings needed (from rate)</dt>
+                <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
+                  <dt className="text-slate-600 dark:text-zinc-400">Monthly savings needed (from rate)</dt>
                   <dd className="font-mono">${formatMoney2(fire.monthlySave)}</dd>
                 </div>
-                <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                  <dt className="text-zinc-400">Years to FIRE</dt>
+                <div className="flex justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-2">
+                  <dt className="text-slate-600 dark:text-zinc-400">Years to FIRE</dt>
                   <dd className="font-mono text-lg font-medium">
                     {fire.yearsTo === null
                       ? "—"
@@ -913,7 +902,7 @@ export default function CalculatorsPage() {
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-zinc-400">Projected portfolio at FIRE</dt>
+                  <dt className="text-slate-600 dark:text-zinc-400">Projected portfolio at FIRE</dt>
                   <dd className="font-mono text-emerald-400">
                     ${formatMoney(fire.projectedAtFire)}
                   </dd>
@@ -922,21 +911,21 @@ export default function CalculatorsPage() {
 
               {fire.months !== null && (
                 <div className="mt-6">
-                  <h3 className="text-sm font-medium text-zinc-300">Milestone timeline</h3>
+                  <h3 className="text-sm font-medium text-slate-700 dark:text-zinc-300">Milestone timeline</h3>
                   <ul className="mt-3 space-y-2">
                     {fire.milestones.map((m, i) => (
                       <li
                         key={i}
-                        className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-sm"
+                        className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/95 dark:bg-zinc-900/40 px-3 py-2 text-sm"
                       >
-                        <span className="text-zinc-400">{m.label}</span>
-                        <span className="text-zinc-500">
+                        <span className="text-slate-600 dark:text-zinc-400">{m.label}</span>
+                        <span className="text-slate-500 dark:text-zinc-500">
                           {m.years.toLocaleString(undefined, {
                             maximumFractionDigits: 1,
                           })}{" "}
                           yrs
                         </span>
-                        <span className="font-mono text-white">
+                        <span className="font-mono text-slate-900 dark:text-white">
                           ${formatMoney(m.balance)}
                         </span>
                       </li>
@@ -952,14 +941,14 @@ export default function CalculatorsPage() {
         {tab === "debt" && (
           <section className="mt-8 grid gap-8 lg:grid-cols-2 lg:items-start">
             <div
-              className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
               style={{ ["--card" as string]: "#151a22" } as CSSProperties}
             >
               <h2 className="text-lg font-semibold">Debts</h2>
               <div className="mt-4 space-y-4 overflow-x-auto">
                 <table className="w-full min-w-[320px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-zinc-800 text-zinc-400">
+                    <tr className="border-b border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400">
                       <th className="pb-2 pr-2 font-medium">Name</th>
                       <th className="pb-2 pr-2 font-medium">Balance</th>
                       <th className="pb-2 pr-2 font-medium">APR %</th>
@@ -969,10 +958,10 @@ export default function CalculatorsPage() {
                   </thead>
                   <tbody>
                     {debts.map((d) => (
-                      <tr key={d.id} className="border-b border-zinc-800/80">
+                      <tr key={d.id} className="border-b border-slate-200 dark:border-zinc-800/80">
                         <td className="py-2 pr-2">
                           <input
-                            className="w-full min-w-[100px] rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-white"
+                            className="w-full min-w-[100px] rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-slate-900 dark:text-white"
                             value={d.name}
                             onChange={(e) =>
                               setDebts((prev) =>
@@ -986,7 +975,7 @@ export default function CalculatorsPage() {
                         <td className="py-2 pr-2">
                           <input
                             type="number"
-                            className="w-full min-w-[80px] rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-white"
+                            className="w-full min-w-[80px] rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-slate-900 dark:text-white"
                             value={d.balanceStr}
                             onChange={(e) =>
                               setDebts((prev) =>
@@ -1003,7 +992,7 @@ export default function CalculatorsPage() {
                           <input
                             type="number"
                             step="0.01"
-                            className="w-full min-w-[70px] rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-white"
+                            className="w-full min-w-[70px] rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-slate-900 dark:text-white"
                             value={d.aprStr}
                             onChange={(e) =>
                               setDebts((prev) =>
@@ -1019,7 +1008,7 @@ export default function CalculatorsPage() {
                         <td className="py-2 pr-2">
                           <input
                             type="number"
-                            className="w-full min-w-[70px] rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-white"
+                            className="w-full min-w-[70px] rounded border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-1 text-slate-900 dark:text-white"
                             value={d.minPaymentStr}
                             onChange={(e) =>
                               setDebts((prev) =>
@@ -1063,15 +1052,15 @@ export default function CalculatorsPage() {
                     },
                   ])
                 }
-                className="mt-4 rounded-lg bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-700"
+                className="mt-4 rounded-lg bg-slate-200 dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-slate-800 dark:text-zinc-200 hover:bg-zinc-700"
               >
                 Add debt
               </button>
 
               <label className="mt-6 block">
-                <span className="flex justify-between text-sm text-zinc-400">
+                <span className="flex justify-between text-sm text-slate-600 dark:text-zinc-400">
                   <span>Extra monthly payment</span>
-                  <span className="font-mono text-white">${debtExtra}</span>
+                  <span className="font-mono text-slate-900 dark:text-white">${debtExtra}</span>
                 </span>
                 <input
                   type="range"
@@ -1086,23 +1075,23 @@ export default function CalculatorsPage() {
             </div>
 
             <div
-              className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+              className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
               style={{ ["--card" as string]: "#151a22" } as CSSProperties}
             >
               <h2 className="text-lg font-semibold">Avalanche vs snowball</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                <div className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4">
                   <h3 className="text-sm font-semibold text-blue-400">Avalanche</h3>
-                  <p className="mt-2 text-xs text-zinc-500">Highest APR first</p>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-zinc-500">Highest APR first</p>
                   <dl className="mt-3 space-y-2 text-sm">
                     <div className="flex justify-between gap-2">
-                      <dt className="text-zinc-400">Total interest</dt>
+                      <dt className="text-slate-600 dark:text-zinc-400">Total interest</dt>
                       <dd className="font-mono">
                         ${formatMoney(debtCompare.avalanche.totalInterestPaid)}
                       </dd>
                     </div>
                     <div className="flex justify-between gap-2">
-                      <dt className="text-zinc-400">Payoff time</dt>
+                      <dt className="text-slate-600 dark:text-zinc-400">Payoff time</dt>
                       <dd className="font-mono">
                         {debtCompare.avalanche.months >= 600
                           ? "50+ yrs"
@@ -1113,18 +1102,18 @@ export default function CalculatorsPage() {
                     </div>
                   </dl>
                 </div>
-                <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                <div className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4">
                   <h3 className="text-sm font-semibold text-amber-400">Snowball</h3>
-                  <p className="mt-2 text-xs text-zinc-500">Lowest balance first</p>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-zinc-500">Lowest balance first</p>
                   <dl className="mt-3 space-y-2 text-sm">
                     <div className="flex justify-between gap-2">
-                      <dt className="text-zinc-400">Total interest</dt>
+                      <dt className="text-slate-600 dark:text-zinc-400">Total interest</dt>
                       <dd className="font-mono">
                         ${formatMoney(debtCompare.snowball.totalInterestPaid)}
                       </dd>
                     </div>
                     <div className="flex justify-between gap-2">
-                      <dt className="text-zinc-400">Payoff time</dt>
+                      <dt className="text-slate-600 dark:text-zinc-400">Payoff time</dt>
                       <dd className="font-mono">
                         {debtCompare.snowball.months >= 600
                           ? "50+ yrs"
@@ -1145,27 +1134,27 @@ export default function CalculatorsPage() {
             <div className="grid gap-8 lg:grid-cols-[340px_1fr] lg:items-start">
               {/* Inputs */}
               <div
-                className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
+                className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 sm:p-6"
                 style={{ ["--card" as string]: "#151a22" } as CSSProperties}
               >
                 <h2 className="text-lg font-semibold">Your finances</h2>
                 <div className="mt-4 space-y-4">
                   <label className="block">
-                    <span className="text-sm text-zinc-400">Annual gross income ($)</span>
-                    <input type="number" className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carIncomeStr} onChange={(e) => setCarIncomeStr(e.target.value)} />
+                    <span className="text-sm text-slate-600 dark:text-zinc-400">Annual gross income ($)</span>
+                    <input type="number" className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500" value={carIncomeStr} onChange={(e) => setCarIncomeStr(e.target.value)} />
                   </label>
                   <label className="block">
-                    <span className="text-sm text-zinc-400">Monthly debt payments ($)</span>
-                    <input type="number" className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carDebtsStr} onChange={(e) => setCarDebtsStr(e.target.value)} />
-                    <span className="mt-1 block text-xs text-zinc-600">Student loans, credit cards, etc.</span>
+                    <span className="text-sm text-slate-600 dark:text-zinc-400">Monthly debt payments ($)</span>
+                    <input type="number" className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500" value={carDebtsStr} onChange={(e) => setCarDebtsStr(e.target.value)} />
+                    <span className="mt-1 block text-xs text-slate-600 dark:text-zinc-600">Student loans, credit cards, etc.</span>
                   </label>
                   <label className="block">
-                    <span className="text-sm text-zinc-400">Down payment available ($)</span>
-                    <input type="number" className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carDownStr} onChange={(e) => setCarDownStr(e.target.value)} />
+                    <span className="text-sm text-slate-600 dark:text-zinc-400">Down payment available ($)</span>
+                    <input type="number" className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500" value={carDownStr} onChange={(e) => setCarDownStr(e.target.value)} />
                   </label>
                   <label className="block">
-                    <span className="text-sm text-zinc-400">Credit score range</span>
-                    <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carCredit} onChange={(e) => setCarCredit(e.target.value as CreditTier)}>
+                    <span className="text-sm text-slate-600 dark:text-zinc-400">Credit score range</span>
+                    <select className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500" value={carCredit} onChange={(e) => setCarCredit(e.target.value as CreditTier)}>
                       <option value="excellent">Excellent (750+)</option>
                       <option value="good">Good (700–749)</option>
                       <option value="fair">Fair (650–699)</option>
@@ -1173,8 +1162,8 @@ export default function CalculatorsPage() {
                     </select>
                   </label>
                   <label className="block">
-                    <span className="text-sm text-zinc-400">Loan term</span>
-                    <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-white outline-none focus:border-blue-500" value={carTermStr} onChange={(e) => setCarTermStr(e.target.value)}>
+                    <span className="text-sm text-slate-600 dark:text-zinc-400">Loan term</span>
+                    <select className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500" value={carTermStr} onChange={(e) => setCarTermStr(e.target.value)}>
                       <option value="36">36 months (3 years)</option>
                       <option value="48">48 months (4 years)</option>
                       <option value="60">60 months (5 years)</option>
@@ -1187,7 +1176,7 @@ export default function CalculatorsPage() {
               {/* 3-Tier Results */}
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold">What you can afford</h2>
-                <p className="text-sm text-zinc-400">Based on your income, debts, and credit. Click a tier to find matching cars below.</p>
+                <p className="text-sm text-slate-600 dark:text-zinc-400">Based on your income, debts, and credit. Click a tier to find matching cars below.</p>
                 <div className="grid gap-4 sm:grid-cols-3">
                   {carTiers.map((tier, idx) => {
                     const sample = sampleCarForTier(idx);
@@ -1200,8 +1189,8 @@ export default function CalculatorsPage() {
                         key={tier.label}
                         type="button"
                         onClick={() => { setFinderTier(idx); setFinderOpen(true); }}
-                        className={`rounded-xl border p-5 text-left transition hover:border-zinc-600 ${
-                          finderOpen && finderTier === idx ? "border-blue-500/50 bg-blue-500/5" : "border-zinc-800 bg-[#151a22]"
+                        className={`rounded-xl border p-5 text-left transition hover:border-slate-300 dark:border-zinc-600 ${
+                          finderOpen && finderTier === idx ? "border-blue-500/50 bg-blue-500/5" : "border-slate-200 dark:border-zinc-800 bg-[#151a22]"
                         }`}
                       >
                         <div className="flex items-center gap-2">
@@ -1209,52 +1198,52 @@ export default function CalculatorsPage() {
                           <span className="text-sm font-semibold uppercase tracking-wider" style={{ color: tier.color }}>{tier.label}</span>
                         </div>
 
-                        <p className="mt-3 font-mono text-2xl font-semibold text-white">
+                        <p className="mt-3 font-mono text-2xl font-semibold text-slate-900 dark:text-white">
                           ${formatMoney(tier.maxCarPrice)}
                         </p>
-                        <p className="text-xs text-zinc-500">max car price</p>
+                        <p className="text-xs text-slate-500 dark:text-zinc-500">max car price</p>
 
                         <div className="mt-4 space-y-1.5 text-sm">
-                          <div className="flex justify-between text-zinc-400">
+                          <div className="flex justify-between text-slate-600 dark:text-zinc-400">
                             <span>Loan amount</span>
-                            <span className="font-mono text-zinc-300">${formatMoney(tier.loanAmount)}</span>
+                            <span className="font-mono text-slate-700 dark:text-zinc-300">${formatMoney(tier.loanAmount)}</span>
                           </div>
-                          <div className="flex justify-between text-zinc-400">
+                          <div className="flex justify-between text-slate-600 dark:text-zinc-400">
                             <span>Monthly payment</span>
-                            <span className="font-mono text-zinc-300">${formatMoney(tier.maxMonthlyPayment)}/mo</span>
+                            <span className="font-mono text-slate-700 dark:text-zinc-300">${formatMoney(tier.maxMonthlyPayment)}/mo</span>
                           </div>
-                          <div className="flex justify-between text-zinc-400">
+                          <div className="flex justify-between text-slate-600 dark:text-zinc-400">
                             <span>Interest rate</span>
-                            <span className="font-mono text-zinc-300">{tier.rate}%</span>
+                            <span className="font-mono text-slate-700 dark:text-zinc-300">{tier.rate}%</span>
                           </div>
                         </div>
 
                         {costs && sample && (
-                          <div className="mt-4 border-t border-zinc-800 pt-3">
-                            <p className="text-xs font-medium text-zinc-500">Estimated total monthly cost</p>
+                          <div className="mt-4 border-t border-slate-200 dark:border-zinc-800 pt-3">
+                            <p className="text-xs font-medium text-slate-500 dark:text-zinc-500">Estimated total monthly cost</p>
                             <div className="mt-2 space-y-1 text-xs">
-                              <div className="flex justify-between text-zinc-400">
+                              <div className="flex justify-between text-slate-600 dark:text-zinc-400">
                                 <span>Payment</span>
                                 <span className="font-mono">${formatMoney(costs.monthlyPayment)}</span>
                               </div>
-                              <div className="flex justify-between text-zinc-400">
+                              <div className="flex justify-between text-slate-600 dark:text-zinc-400">
                                 <span>Insurance</span>
                                 <span className="font-mono">${formatMoney(costs.insurance)}</span>
                               </div>
-                              <div className="flex justify-between text-zinc-400">
+                              <div className="flex justify-between text-slate-600 dark:text-zinc-400">
                                 <span>Gas / energy</span>
                                 <span className="font-mono">${formatMoney(costs.gas)}</span>
                               </div>
-                              <div className="flex justify-between text-zinc-400">
+                              <div className="flex justify-between text-slate-600 dark:text-zinc-400">
                                 <span>Maintenance</span>
                                 <span className="font-mono">${formatMoney(costs.maintenance)}</span>
                               </div>
-                              <div className="mt-1 flex justify-between border-t border-zinc-800 pt-1 font-medium text-white">
+                              <div className="mt-1 flex justify-between border-t border-slate-200 dark:border-zinc-800 pt-1 font-medium text-slate-900 dark:text-white">
                                 <span>Total</span>
                                 <span className="font-mono">${formatMoney(costs.total)}/mo</span>
                               </div>
                             </div>
-                            <p className="mt-2 text-xs text-zinc-600">
+                            <p className="mt-2 text-xs text-slate-600 dark:text-zinc-600">
                               e.g. {sample.years[1] >= currentYear ? "New" : ""} {sample.make} {sample.model}
                             </p>
                           </div>
@@ -1267,26 +1256,26 @@ export default function CalculatorsPage() {
             </div>
 
             {/* Car Finder */}
-            <div className="rounded-xl border border-zinc-800 bg-[#151a22]">
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[#151a22]">
               <button
                 type="button"
                 onClick={() => setFinderOpen(!finderOpen)}
                 className="flex w-full items-center justify-between px-5 py-4 text-left"
               >
                 <div>
-                  <h3 className="text-base font-semibold text-white">Find cars in your budget</h3>
-                  <p className="mt-0.5 text-sm text-zinc-500">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">Find cars in your budget</h3>
+                  <p className="mt-0.5 text-sm text-slate-500 dark:text-zinc-500">
                     Browse {CARS.length}+ models — filter by brand, type, new/used, and more
                   </p>
                 </div>
-                <span className="text-lg text-zinc-500">{finderOpen ? "▾" : "▸"}</span>
+                <span className="text-lg text-slate-500 dark:text-zinc-500">{finderOpen ? "▾" : "▸"}</span>
               </button>
 
               {finderOpen && (
-                <div className="border-t border-zinc-800 px-5 py-5">
+                <div className="border-t border-slate-200 dark:border-zinc-800 px-5 py-5">
                   {/* Tier selector */}
                   <div className="mb-4 flex flex-wrap items-center gap-2">
-                    <span className="text-sm text-zinc-400">Shopping in:</span>
+                    <span className="text-sm text-slate-600 dark:text-zinc-400">Shopping in:</span>
                     {carTiers.map((tier, idx) => (
                       <button
                         key={idx}
@@ -1294,8 +1283,8 @@ export default function CalculatorsPage() {
                         onClick={() => setFinderTier(idx)}
                         className={`rounded-lg px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition ${
                           finderTier === idx
-                            ? "text-white"
-                            : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                            ? "text-slate-900 dark:text-white"
+                            : "bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:text-zinc-200"
                         }`}
                         style={finderTier === idx ? { backgroundColor: tier.color + "30", color: tier.color, border: `1px solid ${tier.color}50` } : {}}
                       >
@@ -1307,30 +1296,30 @@ export default function CalculatorsPage() {
                   {/* Filters */}
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
-                      <label className="block text-xs font-medium text-zinc-500">Brand</label>
-                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderMake} onChange={(e) => setFinderMake(e.target.value)}>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">Brand</label>
+                      <select className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500" value={finderMake} onChange={(e) => setFinderMake(e.target.value)}>
                         <option value="any">All brands</option>
                         {allMakes.map((m) => <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-zinc-500">Type</label>
-                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderType} onChange={(e) => setFinderType(e.target.value as CarType | "any")}>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">Type</label>
+                      <select className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500" value={finderType} onChange={(e) => setFinderType(e.target.value as CarType | "any")}>
                         <option value="any">All types</option>
                         {CAR_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-zinc-500">Condition</label>
-                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderCondition} onChange={(e) => setFinderCondition(e.target.value as "new" | "used" | "any")}>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">Condition</label>
+                      <select className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500" value={finderCondition} onChange={(e) => setFinderCondition(e.target.value as "new" | "used" | "any")}>
                         <option value="any">New &amp; Used</option>
                         <option value="new">New only</option>
                         <option value="used">Used only</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-zinc-500">Fuel type</label>
-                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderFuel} onChange={(e) => setFinderFuel(e.target.value as FuelType | "any")}>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">Fuel type</label>
+                      <select className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500" value={finderFuel} onChange={(e) => setFinderFuel(e.target.value as FuelType | "any")}>
                         <option value="any">All fuel types</option>
                         <option value="gas">Gas</option>
                         <option value="hybrid">Hybrid</option>
@@ -1340,32 +1329,32 @@ export default function CalculatorsPage() {
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <div>
-                      <label className="block text-xs font-medium text-zinc-500">ZIP code</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">ZIP code</label>
                       <input
                         type="text"
                         inputMode="numeric"
                         autoComplete="postal-code"
                         maxLength={5}
-                        className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500"
+                        className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500"
                         value={finderZipStr}
                         onChange={(e) =>
                           setFinderZipStr(e.target.value.replace(/\D/g, "").slice(0, 5))
                         }
                         placeholder="90210"
                       />
-                      <p className="mt-1 text-[11px] text-zinc-600">Local inventory on dealer sites</p>
+                      <p className="mt-1 text-[11px] text-slate-600 dark:text-zinc-600">Local inventory on dealer sites</p>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-zinc-500">Year range</label>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">Year range</label>
                       <div className="mt-1 flex gap-1">
-                        <input type="number" className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderMinYear} onChange={(e) => setFinderMinYear(Number(e.target.value) || 2010)} min={2010} max={2026} />
-                        <span className="self-center text-zinc-500">–</span>
-                        <input type="number" className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-2 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderMaxYear} onChange={(e) => setFinderMaxYear(Number(e.target.value) || 2026)} min={2010} max={2026} />
+                        <input type="number" className="w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500" value={finderMinYear} onChange={(e) => setFinderMinYear(Number(e.target.value) || 2010)} min={2010} max={2026} />
+                        <span className="self-center text-slate-500 dark:text-zinc-500">–</span>
+                        <input type="number" className="w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500" value={finderMaxYear} onChange={(e) => setFinderMaxYear(Number(e.target.value) || 2026)} min={2010} max={2026} />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-zinc-500">Max mileage (used)</label>
-                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderMaxMileage} onChange={(e) => setFinderMaxMileage(Number(e.target.value))}>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">Max mileage (used)</label>
+                      <select className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500" value={finderMaxMileage} onChange={(e) => setFinderMaxMileage(Number(e.target.value))}>
                         <option value={30000}>30,000 mi</option>
                         <option value={50000}>50,000 mi</option>
                         <option value={80000}>80,000 mi</option>
@@ -1374,8 +1363,8 @@ export default function CalculatorsPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-zinc-500">Sort by</label>
-                      <select className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-blue-500" value={finderSort} onChange={(e) => setFinderSort(e.target.value as "monthly" | "price" | "mileage" | "mpg")}>
+                      <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">Sort by</label>
+                      <select className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500" value={finderSort} onChange={(e) => setFinderSort(e.target.value as "monthly" | "price" | "mileage" | "mpg")}>
                         <option value="monthly">Monthly cost (low to high)</option>
                         <option value="price">Price (low to high)</option>
                         <option value="mileage">Mileage (low to high)</option>
@@ -1386,12 +1375,12 @@ export default function CalculatorsPage() {
 
                   {/* Results */}
                   <div className="mt-5">
-                    <p className="text-sm text-zinc-400">{finderResults.length} vehicles found</p>
+                    <p className="text-sm text-slate-600 dark:text-zinc-400">{finderResults.length} vehicles found</p>
                     {finderResults.length > 0 && (
-                      <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-                        Each card opens <span className="text-zinc-400">one</span> marketplace with a targeted search (year,
+                      <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-zinc-500">
+                        Each card opens <span className="text-slate-600 dark:text-zinc-400">one</span> marketplace with a targeted search (year,
                         make/model, body style, fuel, price and mileage near this row&apos;s estimate, ZIP{" "}
-                        <span className="font-mono text-zinc-400">
+                        <span className="font-mono text-slate-600 dark:text-zinc-400">
                           {finderZipStr.length === 5 ? finderZipStr : "90210"}
                         </span>
                         ). The site rotates by vehicle so every link stays as specific as possible—we don&apos;t receive
@@ -1399,7 +1388,7 @@ export default function CalculatorsPage() {
                       </p>
                     )}
                     {finderResults.length === 0 ? (
-                      <p className="mt-4 text-center text-sm text-zinc-500">No vehicles match your filters and budget. Try broadening your search.</p>
+                      <p className="mt-4 text-center text-sm text-slate-500 dark:text-zinc-500">No vehicles match your filters and budget. Try broadening your search.</p>
                     ) : (
                       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {finderResults.map((r, i) => {
@@ -1435,12 +1424,12 @@ export default function CalculatorsPage() {
                           return (
                             <div
                               key={`${r.car.id}-${r.year}-${i}`}
-                              className="flex flex-col rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
+                              className="flex flex-col rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4"
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div>
-                                  <p className="text-sm font-semibold text-white">{r.car.make} {r.car.model}</p>
-                                  <p className="mt-0.5 text-xs text-zinc-500">{r.year} · {typeLabel}{r.isUsed && r.mileage !== null ? ` · ${formatMoney(r.mileage)} mi` : ""}</p>
+                                  <p className="text-sm font-semibold text-slate-900 dark:text-white">{r.car.make} {r.car.model}</p>
+                                  <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-500">{r.year} · {typeLabel}{r.isUsed && r.mileage !== null ? ` · ${formatMoney(r.mileage)} mi` : ""}</p>
                                 </div>
                                 <div className="flex shrink-0 gap-1">
                                   {r.car.fuel !== "gas" && (
@@ -1453,27 +1442,27 @@ export default function CalculatorsPage() {
                                   </span>
                                 </div>
                               </div>
-                              <p className="mt-3 font-mono text-lg font-semibold text-white">${formatMoney(r.price)}</p>
+                              <p className="mt-3 font-mono text-lg font-semibold text-slate-900 dark:text-white">${formatMoney(r.price)}</p>
                               <div className="mt-2 flex items-baseline justify-between text-xs">
-                                <span className="text-zinc-400">Est. total monthly</span>
+                                <span className="text-slate-600 dark:text-zinc-400">Est. total monthly</span>
                                 <span className="font-mono font-medium text-blue-400">${formatMoney(r.monthlyTotal)}/mo</span>
                               </div>
                               <div className="mt-1 flex items-baseline justify-between text-xs">
-                                <span className="text-zinc-500">{r.car.types.includes("ev") ? "MPGe" : "MPG"}</span>
-                                <span className="font-mono text-zinc-400">{r.car.mpg}</span>
+                                <span className="text-slate-500 dark:text-zinc-500">{r.car.types.includes("ev") ? "MPGe" : "MPG"}</span>
+                                <span className="font-mono text-slate-600 dark:text-zinc-400">{r.car.mpg}</span>
                               </div>
-                              <div className="mt-3 border-t border-zinc-800 pt-3">
-                                <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                              <div className="mt-3 border-t border-slate-200 dark:border-zinc-800 pt-3">
+                                <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                                   Shop live listings
                                 </p>
                                 <a
                                   href={dealerLink.href}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex w-full flex-col items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-3 text-center text-xs font-semibold leading-snug text-blue-400 transition hover:border-zinc-500 hover:bg-zinc-800 hover:text-blue-300"
+                                  className="flex w-full flex-col items-center justify-center rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-950/60 px-3 py-3 text-center text-xs font-semibold leading-snug text-blue-400 transition hover:border-slate-300 dark:border-zinc-500 hover:bg-slate-200 dark:bg-zinc-800 hover:text-blue-300"
                                 >
                                   <span>Open on {dealerLink.label}</span>
-                                  <span className="mt-1 text-[10px] font-normal text-zinc-500">
+                                  <span className="mt-1 text-[10px] font-normal text-slate-500 dark:text-zinc-500">
                                     ~${formatMoney(priceBand.min)}–${formatMoney(priceBand.max)}
                                     {mileBandLabel}
                                     {" · "}
@@ -1500,7 +1489,7 @@ export default function CalculatorsPage() {
                 <label className="flex cursor-pointer items-start gap-3">
                   <input
                     type="checkbox"
-                    className="mt-1 h-4 w-4 shrink-0 rounded border-zinc-600 bg-zinc-900 text-amber-500 focus:ring-amber-500/40"
+                    className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-amber-500 focus:ring-amber-500/40"
                     checked={showPeerMarketplaces}
                     onChange={(e) => setShowPeerMarketplaces(e.target.checked)}
                   />
@@ -1508,7 +1497,7 @@ export default function CalculatorsPage() {
                     <span className="block text-sm font-semibold text-amber-200/95">
                       Show peer-to-peer search links (Craigslist &amp; Facebook Marketplace)
                     </span>
-                    <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
+                    <span className="mt-1 block text-xs leading-relaxed text-slate-500 dark:text-zinc-500">
                       Private-party listings are unverified. Meet safely, confirm price and title/VIN before paying.
                       Facebook does not support min-price filters in the URL—ignore unrealistic prices.
                     </span>
@@ -1519,9 +1508,9 @@ export default function CalculatorsPage() {
               {showPeerMarketplaces && (
                 <div className="px-5 py-5">
                   <div className="max-w-md">
-                    <label className="block text-xs font-medium text-zinc-500">Craigslist region</label>
+                    <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">Craigslist region</label>
                     <select
-                      className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white outline-none focus:border-amber-600/60"
+                      className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-amber-600/60"
                       value={peerCraigslistSite}
                       onChange={(e) => setPeerCraigslistSite(e.target.value)}
                     >
@@ -1531,14 +1520,14 @@ export default function CalculatorsPage() {
                         </option>
                       ))}
                     </select>
-                    <p className="mt-1 text-[11px] text-zinc-600">
+                    <p className="mt-1 text-[11px] text-slate-600 dark:text-zinc-600">
                       Defaults from your ZIP when you enable this section; change if you shop outside that area.
                       Craigslist search uses min/max price to reduce obvious $1 / $999 bait.
                     </p>
                   </div>
 
                   {finderResults.length === 0 ? (
-                    <p className="mt-6 text-center text-sm text-zinc-500">
+                    <p className="mt-6 text-center text-sm text-slate-500 dark:text-zinc-500">
                       Use the finder above with results first—peer links use the same filters and tier cap.
                     </p>
                   ) : (
@@ -1569,44 +1558,44 @@ export default function CalculatorsPage() {
                         return (
                           <div
                             key={`peer-${r.car.id}-${r.year}-${i}`}
-                            className="flex flex-col rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
+                            className="flex flex-col rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div>
-                                <p className="text-sm font-semibold text-white">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
                                   {r.car.make} {r.car.model}
                                 </p>
-                                <p className="mt-0.5 text-xs text-zinc-500">
+                                <p className="mt-0.5 text-xs text-slate-500 dark:text-zinc-500">
                                   {r.year} · {typeLabel}
                                   {r.isUsed && r.mileage !== null ? ` · ${formatMoney(r.mileage)} mi` : ""}
                                 </p>
                               </div>
                               <span
                                 className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                                  r.isUsed ? "bg-amber-500/20 text-amber-400" : "bg-zinc-600/40 text-zinc-400"
+                                  r.isUsed ? "bg-amber-500/20 text-amber-400" : "bg-zinc-600/40 text-slate-600 dark:text-zinc-400"
                                 }`}
                               >
                                 {r.isUsed ? "Used" : "New"}
                               </span>
                             </div>
                             {!peerLink ? (
-                              <p className="mt-3 text-xs leading-relaxed text-zinc-500">
-                                Peer listings are almost always <span className="text-zinc-400">used</span>. Use dealer
+                              <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-zinc-500">
+                                Peer listings are almost always <span className="text-slate-600 dark:text-zinc-400">used</span>. Use dealer
                                 links above for new cars, or include used vehicles in the finder.
                               </p>
                             ) : (
-                              <div className="mt-3 border-t border-zinc-800 pt-3">
-                                <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                              <div className="mt-3 border-t border-slate-200 dark:border-zinc-800 pt-3">
+                                <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                                   Peer search (filtered)
                                 </p>
                                 <a
                                   href={peerLink.href}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex w-full flex-col items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950/60 px-3 py-3 text-center text-xs font-semibold leading-snug text-amber-400/95 transition hover:border-amber-700/50 hover:bg-zinc-800 hover:text-amber-300"
+                                  className="flex w-full flex-col items-center justify-center rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-950/60 px-3 py-3 text-center text-xs font-semibold leading-snug text-amber-400/95 transition hover:border-amber-700/50 hover:bg-slate-200 dark:bg-zinc-800 hover:text-amber-300"
                                 >
                                   <span>Open on {peerLink.label}</span>
-                                  <span className="mt-1 text-[10px] font-normal text-zinc-500">
+                                  <span className="mt-1 text-[10px] font-normal text-slate-500 dark:text-zinc-500">
                                     One peer site per vehicle (Craigslist or Facebook) with price + keyword filters where
                                     supported.
                                   </span>

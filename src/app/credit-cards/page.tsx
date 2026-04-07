@@ -130,20 +130,20 @@ export default function CreditCardsPage() {
   return (
     <main className="mx-auto min-w-0 max-w-6xl px-4 py-10 sm:px-6">
       <header className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Credit Card Bonuses
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
           Compare sign-up bonuses, annual fees, and spend requirements in one
           place—filter by personal or business cards and how you prefer to earn
           rewards.
         </p>
       </header>
 
-      <section className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
+      <section className="mb-8 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/60 p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0 flex-1">
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
               Search
             </label>
             <input
@@ -151,12 +151,12 @@ export default function CreditCardsPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Card or issuer name…"
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+              className="w-full rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-950/80 px-3 py-2 text-sm text-slate-800 dark:text-zinc-100 placeholder:text-slate-500 dark:placeholder:text-zinc-500 focus:border-slate-400 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-zinc-500"
             />
           </div>
           <div className="flex flex-wrap gap-6">
             <div>
-              <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                 Card type
               </span>
               <div className="flex gap-2">
@@ -173,8 +173,8 @@ export default function CreditCardsPage() {
                     onClick={() => setBiz(k)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
                       biz === k
-                        ? "bg-zinc-100 text-zinc-900"
-                        : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-800"
+                        ? "bg-slate-200 text-slate-900 dark:bg-zinc-100 dark:text-zinc-900"
+                        : "bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800"
                     }`}
                   >
                     {label}
@@ -183,7 +183,7 @@ export default function CreditCardsPage() {
               </div>
             </div>
             <div>
-              <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <span className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                 Rewards
               </span>
               <div className="flex gap-2">
@@ -200,8 +200,8 @@ export default function CreditCardsPage() {
                     onClick={() => setReward(k)}
                     className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
                       reward === k
-                        ? "bg-zinc-100 text-zinc-900"
-                        : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-800"
+                        ? "bg-slate-200 text-slate-900 dark:bg-zinc-100 dark:text-zinc-900"
+                        : "bg-slate-100 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800"
                     }`}
                   >
                     {label}
@@ -210,13 +210,13 @@ export default function CreditCardsPage() {
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                 Max Annual Fee
               </label>
               <select
                 value={maxFee}
                 onChange={(e) => setMaxFee(e.target.value as typeof maxFee)}
-                className="rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                className="rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-950/80 px-3 py-2 text-sm text-slate-800 dark:text-zinc-100 focus:border-slate-400 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-zinc-500"
               >
                 <option value="any">Any</option>
                 <option value="0">$0 (No Fee)</option>
@@ -226,13 +226,13 @@ export default function CreditCardsPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                 Max Min Spend
               </label>
               <select
                 value={maxSpend}
                 onChange={(e) => setMaxSpend(e.target.value as typeof maxSpend)}
-                className="rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                className="rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-950/80 px-3 py-2 text-sm text-slate-800 dark:text-zinc-100 focus:border-slate-400 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-zinc-500"
               >
                 <option value="any">Any</option>
                 <option value="1000">Up to $1,000</option>
@@ -242,13 +242,13 @@ export default function CreditCardsPage() {
               </select>
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                 Sort
               </label>
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
-                className="rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                className="rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-zinc-950/80 px-3 py-2 text-sm text-slate-800 dark:text-zinc-100 focus:border-slate-400 dark:focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-zinc-500"
               >
                 <option value="value">Best Value</option>
                 <option value="fee">Lowest Fee</option>
@@ -260,7 +260,7 @@ export default function CreditCardsPage() {
       </section>
 
       {loading && (
-        <p className="text-sm text-zinc-500">Loading credit card offers…</p>
+        <p className="text-sm text-slate-500 dark:text-zinc-500">Loading credit card offers…</p>
       )}
       {error && !loading && (
         <p className="text-sm text-red-400">{error}</p>
@@ -273,7 +273,7 @@ export default function CreditCardsPage() {
             return (
               <li
                 key={c.id}
-                className="flex flex-col rounded-2xl border border-zinc-800 p-5 shadow-sm transition hover:border-zinc-700"
+                className="flex flex-col rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm transition hover:border-slate-300 dark:border-zinc-700"
                 style={{ backgroundColor: "var(--card)" }}
               >
                 <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -288,40 +288,40 @@ export default function CreditCardsPage() {
                     </span>
                   )}
                 </div>
-                <h2 className="text-lg font-semibold leading-snug text-white">
+                <h2 className="text-lg font-semibold leading-snug text-slate-900 dark:text-white">
                   {c.name}
                 </h2>
                 <p className="mt-3 text-3xl font-bold tabular-nums text-emerald-400">
                   ${c.bonusValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                  <span className="ml-1 text-sm font-normal text-zinc-500">
+                  <span className="ml-1 text-sm font-normal text-slate-500 dark:text-zinc-500">
                     est. value
                   </span>
                 </p>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-400">
+                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
                   {c.bonusDescription}
                 </p>
-                <dl className="mt-4 space-y-2 border-t border-zinc-800 pt-4 text-sm">
+                <dl className="mt-4 space-y-2 border-t border-slate-200 dark:border-zinc-800 pt-4 text-sm">
                   <div className="flex justify-between gap-2">
-                    <dt className="text-zinc-500">Annual fee</dt>
-                    <dd className="text-right text-zinc-200">
+                    <dt className="text-slate-500 dark:text-zinc-500">Annual fee</dt>
+                    <dd className="text-right text-slate-800 dark:text-zinc-200">
                       {c.annualFee === null
                         ? "—"
                         : `$${c.annualFee.toLocaleString("en-US")}`}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2">
-                    <dt className="text-zinc-500">Spend requirement</dt>
-                    <dd className="text-right text-zinc-200">{c.spendRequirement}</dd>
+                    <dt className="text-slate-500 dark:text-zinc-500">Spend requirement</dt>
+                    <dd className="text-right text-slate-800 dark:text-zinc-200">{c.spendRequirement}</dd>
                   </div>
                   {c.spendTimeframe !== "—" && (
                     <div className="flex justify-between gap-2">
-                      <dt className="text-zinc-500">Timeframe</dt>
-                      <dd className="text-right text-zinc-200">{c.spendTimeframe}</dd>
+                      <dt className="text-slate-500 dark:text-zinc-500">Timeframe</dt>
+                      <dd className="text-right text-slate-800 dark:text-zinc-200">{c.spendTimeframe}</dd>
                     </div>
                   )}
                 </dl>
                 <div className="mt-4">
-                  <span className="inline-flex rounded-md border border-zinc-700 bg-zinc-900/50 px-2 py-1 text-xs font-medium text-zinc-300">
+                  <span className="inline-flex rounded-md border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900/50 px-2 py-1 text-xs font-medium text-slate-700 dark:text-zinc-300">
                     {c.network}
                   </span>
                 </div>
@@ -332,7 +332,7 @@ export default function CreditCardsPage() {
       )}
 
       {!loading && !error && filtered.length === 0 && (
-        <p className="text-sm text-zinc-500">No cards match your filters.</p>
+        <p className="text-sm text-slate-500 dark:text-zinc-500">No cards match your filters.</p>
       )}
     </main>
   );

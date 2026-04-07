@@ -205,18 +205,18 @@ export function FlowsCompareChart({ assets }: { assets: AssetRef[] }) {
   if (assets.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-4">
+    <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/50 p-4">
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-white">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
             Relative performance (indexed to 100)
           </h3>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-slate-500 dark:text-zinc-500">
             Lines share the same anchor date (latest first quote in the group);
             values are indexed so 100 = price on that date.
           </p>
         </div>
-        <div className="flex flex-wrap gap-1 rounded-lg border border-zinc-700 p-0.5">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-slate-300 dark:border-zinc-700 p-0.5">
           {RANGE_OPTIONS.map(({ key, label }) => (
             <button
               key={key}
@@ -225,7 +225,7 @@ export function FlowsCompareChart({ assets }: { assets: AssetRef[] }) {
               className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
                 range === key
                   ? "bg-zinc-100 text-zinc-900"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:text-zinc-200"
               }`}
             >
               {label}
@@ -235,13 +235,13 @@ export function FlowsCompareChart({ assets }: { assets: AssetRef[] }) {
       </div>
 
       {loading && (
-        <p className="py-8 text-center text-sm text-zinc-500">Loading chart…</p>
+        <p className="py-8 text-center text-sm text-slate-500 dark:text-zinc-500">Loading chart…</p>
       )}
       {error && !loading && (
         <p className="py-4 text-center text-sm text-red-400">{error}</p>
       )}
       {!loading && !error && chartRows.length === 0 && (
-        <p className="py-8 text-center text-sm text-zinc-500">
+        <p className="py-8 text-center text-sm text-slate-500 dark:text-zinc-500">
           No chart data for this selection.
         </p>
       )}
@@ -284,7 +284,7 @@ export function FlowsCompareChart({ assets }: { assets: AssetRef[] }) {
               <Legend
                 wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }}
                 formatter={(value) => (
-                  <span className="text-zinc-300">{value}</span>
+                  <span className="text-slate-700 dark:text-zinc-300">{value}</span>
                 )}
               />
               {(activeIds.length > 0 ? activeIds : ids).map((id, i) => {

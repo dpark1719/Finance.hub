@@ -193,7 +193,7 @@ export default function Home() {
     <main className="mx-auto min-h-screen min-w-0 max-w-6xl px-4 py-12 sm:px-6">
       <header className="mb-12 text-center sm:mb-14 sm:text-left">
         <h1
-          className="text-4xl font-semibold tracking-tight text-white sm:text-5xl"
+          className="text-4xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-5xl"
           style={{ fontFamily: "var(--font-dm-sans), system-ui" }}
         >
           P1: finance.hub
@@ -208,18 +208,18 @@ export default function Home() {
           <Link
             key={s.href}
             href={s.href}
-            className="group block rounded-xl border border-zinc-800 bg-[var(--card)] p-6 shadow-sm transition hover:border-zinc-600 sm:hover:scale-[1.02]"
+            className="group block rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-6 shadow-sm transition hover:border-slate-300 dark:border-zinc-600 sm:hover:scale-[1.02]"
           >
             <IconWrap>{s.icon}</IconWrap>
-            <h2 className="text-lg font-semibold text-white">{s.title}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{s.title}</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
               {s.description}
             </p>
           </Link>
         ))}
       </div>
 
-      <footer className="mt-16 border-t border-zinc-800 pt-8 text-center text-xs text-zinc-500 sm:text-left">
+      <footer className="mt-16 border-t border-slate-200 dark:border-zinc-800 pt-8 text-center text-xs text-slate-500 dark:text-zinc-500 sm:text-left">
         <p>
           P1: finance.hub — tools for planning and learning. Not financial advice.
         </p>

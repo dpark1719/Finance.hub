@@ -511,14 +511,14 @@ export default function LifestylePage() {
   return (
     <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
       {/* ── Header ──────────────────────────────────────── */}
-      <header className="mb-10 border-b border-zinc-800 pb-8">
-        <p className="font-mono text-xs uppercase tracking-widest text-zinc-500">
+      <header className="mb-10 border-b border-slate-200 dark:border-zinc-800 pb-8">
+        <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
           Lifestyle Calculator
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
           What can you afford?
         </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
           Enter a city and income level to see a full budget breakdown — rent,
           taxes, food, transport, and how much is left over. Covers 80+ US
           cities and 100 global cities with region-adjusted cost estimates.
@@ -526,11 +526,11 @@ export default function LifestylePage() {
       </header>
 
       {/* ── Search bar (travel-booking style) ─────────── */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 sm:p-6">
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/60 p-4 sm:p-6">
         <div className="grid gap-4 sm:grid-cols-[1fr_180px_100px_auto]">
           {/* City search */}
           <div className="relative">
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-500">
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-500">
               City
             </label>
             <input
@@ -545,19 +545,19 @@ export default function LifestylePage() {
               onFocus={() => setShowDropdown(true)}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               placeholder={`Search ${CITIES.length.toLocaleString("en-US")} cities…`}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-base text-white outline-none ring-blue-500/30 placeholder:text-zinc-600 focus:border-blue-500/50 focus:ring-2 sm:text-sm"
+              className="w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-slate-200 dark:bg-zinc-800/80 px-4 py-3 text-base text-slate-900 dark:text-white outline-none ring-blue-500/30 placeholder:text-slate-600 dark:text-zinc-600 focus:border-blue-500/50 focus:ring-2 sm:text-sm"
             />
             {showDropdown && filteredCities.length > 0 && (
-              <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-auto rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl">
+              <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-auto rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl">
                 {filteredCities.map((c) => (
                   <li key={c.id}>
                     <button
                       type="button"
                       onMouseDown={() => selectCity(c)}
-                      className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-zinc-200 hover:bg-zinc-800"
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-slate-800 dark:text-zinc-200 hover:bg-slate-200 dark:bg-zinc-800"
                     >
                       <span className="font-medium">{c.name}</span>
-                      <span className="text-zinc-500">
+                      <span className="text-slate-500 dark:text-zinc-500">
                         {c.country === "US" ? c.state : COUNTRY_NAMES[c.country] ?? c.country}
                       </span>
                     </button>
@@ -569,13 +569,13 @@ export default function LifestylePage() {
 
           {/* Income dropdown */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-500">
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-500">
               Annual Income
             </label>
             <select
               value={income}
               onChange={(e) => setIncome(e.target.value ? Number(e.target.value) : "")}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-base text-white outline-none ring-blue-500/30 focus:border-blue-500/50 focus:ring-2 sm:text-sm"
+              className="w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-slate-200 dark:bg-zinc-800/80 px-4 py-3 text-base text-slate-900 dark:text-white outline-none ring-blue-500/30 focus:border-blue-500/50 focus:ring-2 sm:text-sm"
             >
               <option value="">Select...</option>
               {INCOME_LEVELS.map((l) => (
@@ -588,13 +588,13 @@ export default function LifestylePage() {
 
           {/* Household size */}
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-500">
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-500">
               Household
             </label>
             <select
               value={household}
               onChange={(e) => setHousehold(Number(e.target.value))}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-base text-white outline-none ring-blue-500/30 focus:border-blue-500/50 focus:ring-2 sm:text-sm"
+              className="w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-100 dark:bg-slate-200 dark:bg-zinc-800/80 px-4 py-3 text-base text-slate-900 dark:text-white outline-none ring-blue-500/30 focus:border-blue-500/50 focus:ring-2 sm:text-sm"
             >
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>
@@ -610,7 +610,7 @@ export default function LifestylePage() {
               type="button"
               onClick={calculate}
               disabled={loading || !selectedCity || !income}
-              className="touch-manipulation w-full rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:text-sm"
+              className="touch-manipulation w-full rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-slate-900 dark:text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:text-sm"
             >
               {loading ? "Calculating..." : "Calculate"}
             </button>
@@ -629,19 +629,19 @@ export default function LifestylePage() {
       {result && b && (
         <div className="mt-8 space-y-6">
           {/* Lifestyle tier hero */}
-          <div className="flex flex-col items-center gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-8 sm:flex-row sm:justify-between">
+          <div className="flex flex-col items-center gap-4 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/95 dark:bg-zinc-900/40 p-8 sm:flex-row sm:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-white">
+              <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
                 {result.city.name},{" "}
                 {result.city.country === "US"
                   ? result.city.state
                   : COUNTRY_NAMES[result.city.country] ?? result.city.country}
               </h2>
-              <p className="mt-1 font-mono text-sm text-zinc-400">
+              <p className="mt-1 font-mono text-sm text-slate-600 dark:text-zinc-400">
                 ${fmt(result.income)}/yr gross · {result.household}{" "}
                 {result.household === 1 ? "person" : "people"}
               </p>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-1 text-sm text-slate-500 dark:text-zinc-500">
                 Effective tax rate: {b.effectiveRate}% · Take-home: ${fmt(b.netIncome)}/yr
               </p>
             </div>
@@ -656,24 +656,24 @@ export default function LifestylePage() {
               >
                 {tierLabels[b.lifestyleTier] ?? b.lifestyleTier}
               </span>
-              <p className="mt-2 font-mono text-2xl font-semibold text-white">
+              <p className="mt-2 font-mono text-2xl font-semibold text-slate-900 dark:text-white">
                 ${fmt(b.discretionary)}
               </p>
-              <p className="text-xs text-zinc-500">discretionary/mo</p>
+              <p className="text-xs text-slate-500 dark:text-zinc-500">discretionary/mo</p>
             </div>
           </div>
 
           {/* Donut + line items */}
           <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-            <div className="flex items-center justify-center rounded-xl border border-zinc-800 bg-[var(--card)] p-4">
+            <div className="flex items-center justify-center rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-4">
               <DonutChart slices={donutSlices} center={`$${fmt(b.monthlyNet)}`} />
             </div>
 
-            <div className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5">
-              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-400">
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5">
+              <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-zinc-400">
                 Monthly Budget Breakdown
               </h3>
-              <p className="mb-4 text-xs text-zinc-500">Click any category for typical real-world prices in this city.</p>
+              <p className="mb-4 text-xs text-slate-500 dark:text-zinc-500">Click any category for typical real-world prices in this city.</p>
               <div className="space-y-1">
                 <BudgetRow label={`Rent (${b.rentBedrooms})`} amount={b.rent} color="#3b82f6" total={b.monthlyNet} detail={details?.rent} expanded={expandedRows.has("rent")} onToggle={() => toggleRow("rent")} />
                 <BudgetRow label="Food & Groceries" amount={b.food} color="#22c55e" total={b.monthlyNet} detail={details?.food} expanded={expandedRows.has("food")} onToggle={() => toggleRow("food")} />
@@ -682,7 +682,7 @@ export default function LifestylePage() {
                 <BudgetRow label="Utilities" amount={b.utilities} color="#8b5cf6" total={b.monthlyNet} detail={details?.utilities} expanded={expandedRows.has("utilities")} onToggle={() => toggleRow("utilities")} />
                 <BudgetRow label="Insurance" amount={b.insurance} color="#ec4899" total={b.monthlyNet} detail={details?.insurance} expanded={expandedRows.has("insurance")} onToggle={() => toggleRow("insurance")} />
                 <BudgetRow label="Personal & Misc" amount={b.personal} color="#14b8a6" total={b.monthlyNet} detail={details?.personal} expanded={expandedRows.has("personal")} onToggle={() => toggleRow("personal")} />
-                <div className="my-3 border-t border-zinc-800" />
+                <div className="my-3 border-t border-slate-200 dark:border-zinc-800" />
                 <BudgetRow label="Discretionary" amount={b.discretionary} color="#6b7280" total={b.monthlyNet} bold detail={details?.discretionary} expanded={expandedRows.has("discretionary")} onToggle={() => toggleRow("discretionary")} />
                 <BudgetRow label="Savings capacity" amount={b.savingsCapacity} color="#3b82f6" total={b.monthlyNet} muted />
               </div>
@@ -690,8 +690,8 @@ export default function LifestylePage() {
           </div>
 
           {/* Tax breakdown */}
-          <div className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5">
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-400">
+          <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-zinc-400">
               Annual Tax Breakdown
             </h3>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -705,24 +705,24 @@ export default function LifestylePage() {
 
           {/* City comparisons */}
           {result.comparisons.length > 0 && (
-            <div className="rounded-xl border border-zinc-800 bg-[var(--card)] p-5">
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-zinc-400">
+            <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5">
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-zinc-400">
                 Same income in other cities
               </h3>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 {result.comparisons.map((c) => (
                   <div
                     key={c.id}
-                    className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4"
+                    className="rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 p-4"
                   >
-                    <p className="text-sm font-medium text-white">{c.name}</p>
-                    <p className="mt-1 text-xs text-zinc-500">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{c.name}</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">
                       {c.country === "US" ? c.state : COUNTRY_NAMES[c.country] ?? c.country}
                     </p>
-                    <p className="mt-3 font-mono text-lg font-semibold text-white">
+                    <p className="mt-3 font-mono text-lg font-semibold text-slate-900 dark:text-white">
                       ${fmt(c.discretionary)}
                     </p>
-                    <p className="text-xs text-zinc-500">discretionary/mo</p>
+                    <p className="text-xs text-slate-500 dark:text-zinc-500">discretionary/mo</p>
                     <span
                       className="mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase"
                       style={{
@@ -740,7 +740,7 @@ export default function LifestylePage() {
         </div>
       )}
 
-      <footer className="mt-16 border-t border-zinc-800 pt-8 text-xs text-zinc-600">
+      <footer className="mt-16 border-t border-slate-200 dark:border-zinc-800 pt-8 text-xs text-slate-600 dark:text-zinc-600">
         <p>
           Estimates only — not financial advice. U.S. rents use HUD FY2026 Fair
           Market Rents for metropolitan areas (regional benchmarks, not one
@@ -784,42 +784,42 @@ function BudgetRow({
       <button
         type="button"
         onClick={clickable ? onToggle : undefined}
-        className={`flex w-full items-center gap-3 rounded-lg px-1 py-1 text-left transition ${clickable ? "cursor-pointer hover:bg-zinc-800/50" : "cursor-default"}`}
+        className={`flex w-full items-center gap-3 rounded-lg px-1 py-1 text-left transition ${clickable ? "cursor-pointer hover:bg-slate-200/80 dark:bg-slate-200 dark:bg-zinc-800/50" : "cursor-default"}`}
       >
         <span
           className="h-2.5 w-2.5 shrink-0 rounded-full"
           style={{ backgroundColor: color }}
         />
         <span
-          className={`flex-1 text-sm ${muted ? "text-zinc-500" : bold ? "font-semibold text-white" : "text-zinc-300"}`}
+          className={`flex-1 text-sm ${muted ? "text-slate-500 dark:text-zinc-500" : bold ? "font-semibold text-slate-900 dark:text-white" : "text-slate-700 dark:text-zinc-300"}`}
         >
           {label}
           {clickable && (
-            <span className="ml-1.5 text-[10px] text-zinc-600">{expanded ? "▾" : "▸"}</span>
+            <span className="ml-1.5 text-[10px] text-slate-600 dark:text-zinc-600">{expanded ? "▾" : "▸"}</span>
           )}
         </span>
-        <span className="font-mono text-sm tabular-nums text-zinc-400">
+        <span className="font-mono text-sm tabular-nums text-slate-600 dark:text-zinc-400">
           {Math.round(pct)}%
         </span>
         <span
-          className={`w-24 text-right font-mono text-sm tabular-nums ${bold ? "font-semibold text-white" : "text-zinc-300"}`}
+          className={`w-24 text-right font-mono text-sm tabular-nums ${bold ? "font-semibold text-slate-900 dark:text-white" : "text-slate-700 dark:text-zinc-300"}`}
         >
           ${fmt(amount)}
         </span>
       </button>
 
       {expanded && detail && (
-        <div className="mb-2 ml-5 mt-1 rounded-xl border border-zinc-800/60 bg-zinc-900/60 px-4 py-3">
-          <p className="text-xs leading-relaxed text-zinc-400">{detail.description}</p>
+        <div className="mb-2 ml-5 mt-1 rounded-xl border border-slate-200 dark:border-zinc-800/60 bg-white/95 dark:bg-zinc-900/60 px-4 py-3">
+          <p className="text-xs leading-relaxed text-slate-600 dark:text-zinc-400">{detail.description}</p>
           <div className="mt-3 space-y-1.5">
             {detail.items.map((item, i) => (
               <div key={i} className="flex flex-wrap items-baseline gap-x-2 text-xs">
-                <span className="text-zinc-300">{item.label}</span>
+                <span className="text-slate-700 dark:text-zinc-300">{item.label}</span>
                 {item.price && (
-                  <span className="font-mono font-medium text-white">{item.price}</span>
+                  <span className="font-mono font-medium text-slate-900 dark:text-white">{item.price}</span>
                 )}
                 {item.note && (
-                  <span className="text-zinc-500">— {item.note}</span>
+                  <span className="text-slate-500 dark:text-zinc-500">— {item.note}</span>
                 )}
               </div>
             ))}
@@ -844,15 +844,15 @@ function TaxCard({
       className={`rounded-lg border p-4 ${
         highlight
           ? "border-blue-500/30 bg-blue-500/10"
-          : "border-zinc-800 bg-zinc-900/50"
+          : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50"
       }`}
     >
-      <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+      <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-zinc-500">
         {label}
       </p>
       <p
         className={`mt-1 font-mono text-lg font-semibold tabular-nums ${
-          highlight ? "text-blue-300" : "text-white"
+          highlight ? "text-blue-300" : "text-slate-900 dark:text-white"
         }`}
       >
         ${fmt(amount)}

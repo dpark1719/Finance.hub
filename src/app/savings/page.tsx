@@ -105,17 +105,17 @@ export default function SavingsPage() {
 
   return (
     <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
-      <header className="mb-8 border-b border-zinc-800 pb-8">
-        <p className="font-mono text-xs uppercase tracking-widest text-zinc-500">
+      <header className="mb-8 border-b border-slate-200 dark:border-zinc-800 pb-8">
+        <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
           Deposits
         </p>
         <h1
-          className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl"
+          className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
           style={{ fontFamily: "var(--font-dm-sans), system-ui" }}
         >
           Best Savings Accounts
         </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
           Compare high-yield savings accounts (HYSA) by APY, fees, and FDIC
           insurance — curated static sample for UI demo; confirm rates and terms
           with each institution before opening an account.
@@ -123,12 +123,12 @@ export default function SavingsPage() {
       </header>
 
       <div
-        className="mb-6 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-zinc-200"
+        className="mb-6 rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-slate-800 dark:text-zinc-200"
         role="status"
       >
         <span className="font-medium text-blue-200">Context: </span>
         Current Fed rate:{" "}
-        <span className="tabular-nums font-semibold text-white">4.50%</span>
+        <span className="tabular-nums font-semibold text-slate-900 dark:text-white">4.50%</span>
       </div>
 
       {err && (
@@ -143,7 +143,7 @@ export default function SavingsPage() {
             key={h.key}
             type="button"
             onClick={() => toggleSort(h.key)}
-            className={`rounded-md border border-zinc-700 bg-zinc-900/60 px-2.5 py-1.5 text-xs font-medium uppercase tracking-wide text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 ${h.className ?? ""}`}
+            className={`rounded-md border border-slate-300 dark:border-zinc-700 bg-white/95 dark:bg-zinc-900/60 px-2.5 py-1.5 text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:border-zinc-600 hover:text-slate-800 dark:text-zinc-200 ${h.className ?? ""}`}
           >
             {h.label}
             {sortKey === h.key ? (sortDir === 1 ? " ↑" : " ↓") : ""}
@@ -157,7 +157,7 @@ export default function SavingsPage() {
             key={h.key}
             type="button"
             onClick={() => toggleSort(h.key)}
-            className={`text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 hover:text-zinc-300 ${h.className ?? ""}`}
+            className={`text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:text-zinc-300 ${h.className ?? ""}`}
           >
             {h.label}
             {sortKey === h.key ? (sortDir === 1 ? " ↑" : " ↓") : ""}
@@ -169,19 +169,19 @@ export default function SavingsPage() {
         {sorted.map((row) => (
           <li
             key={row.id}
-            className="rounded-xl border border-zinc-800 bg-[var(--card)] p-4 sm:grid sm:grid-cols-[1.2fr_0.9fr_0.85fr_0.75fr_0.5fr_1.4fr] sm:items-center sm:gap-3"
+            className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-4 sm:grid sm:grid-cols-[1.2fr_0.9fr_0.85fr_0.75fr_0.5fr_1.4fr] sm:items-center sm:gap-3"
           >
-            <div className="font-medium text-white sm:pl-0">{row.bank}</div>
+            <div className="font-medium text-slate-900 dark:text-white sm:pl-0">{row.bank}</div>
             <div
               className="mt-2 text-2xl font-semibold tabular-nums sm:mt-0 sm:text-3xl"
               style={{ color: apyColor(row.apy, minApy, maxApy) }}
             >
               {row.apy.toFixed(2)}%
             </div>
-            <div className="mt-1 text-sm text-zinc-400 sm:mt-0">
+            <div className="mt-1 text-sm text-slate-600 dark:text-zinc-400 sm:mt-0">
               {row.minDeposit}
             </div>
-            <div className="mt-1 text-sm text-zinc-400 sm:mt-0">
+            <div className="mt-1 text-sm text-slate-600 dark:text-zinc-400 sm:mt-0">
               {row.monthlyFee}
             </div>
             <div
@@ -198,7 +198,7 @@ export default function SavingsPage() {
                 </span>
               )}
             </div>
-            <p className="mt-3 border-t border-zinc-800 pt-3 text-sm leading-snug text-zinc-400 sm:mt-0 sm:border-0 sm:pt-0">
+            <p className="mt-3 border-t border-slate-200 dark:border-zinc-800 pt-3 text-sm leading-snug text-slate-600 dark:text-zinc-400 sm:mt-0 sm:border-0 sm:pt-0">
               {row.notes}
             </p>
           </li>

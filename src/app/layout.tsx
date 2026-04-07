@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, IBM_Plex_Mono } from "next/font/google";
+import { ThemeInitScript } from "@/components/ThemeInitScript";
 import { NavBar } from "@/components/NavBar";
+import { DM_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -27,7 +28,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0c0f14",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0f14" },
+  ],
   viewportFit: "cover",
 };
 
@@ -37,7 +41,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <head>
+        <ThemeInitScript />
+      </head>
       <body
         className={`${dmSans.variable} ${plexMono.variable} min-h-full min-w-0 font-sans antialiased`}
         style={{ fontFamily: "var(--font-dm-sans), system-ui, sans-serif" }}

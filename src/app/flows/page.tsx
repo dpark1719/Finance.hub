@@ -78,7 +78,7 @@ function formatPrice(a: FlowAsset): string {
 function pctClass(v: number): string {
   if (v > 0) return "bg-emerald-950/80 text-emerald-300 ring-emerald-800/60";
   if (v < 0) return "bg-red-950/80 text-red-300 ring-red-800/60";
-  return "bg-zinc-800/80 text-zinc-300 ring-zinc-700/60";
+  return "bg-slate-100 dark:bg-slate-200 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 ring-zinc-700/60";
 }
 
 function flowDirectionFor(a: FlowAsset): FlowDirection {
@@ -280,10 +280,10 @@ export default function FlowsPage() {
       `}</style>
 
       <header className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-white">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">
           Capital Flows
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-400">
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
           Track where money moves across metals, commodities, crypto, indices,
           and macro indicators. Select assets to compare performance side by side.
         </p>
@@ -298,7 +298,7 @@ export default function FlowsPage() {
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
               category === c
                 ? "bg-zinc-100 text-zinc-900"
-                : "border border-zinc-800 bg-zinc-900/40 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                : "border border-slate-200 dark:border-zinc-800 bg-slate-50/95 dark:bg-zinc-900/40 text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:border-zinc-700 hover:text-slate-800 dark:text-zinc-200"
             }`}
           >
             {c}
@@ -307,7 +307,7 @@ export default function FlowsPage() {
       </div>
 
       {loading && (
-        <p className="text-sm text-zinc-500">Loading market snapshot…</p>
+        <p className="text-sm text-slate-500 dark:text-zinc-500">Loading market snapshot…</p>
       )}
       {error && !loading && (
         <p className="text-sm text-red-400">{error}</p>
@@ -324,7 +324,7 @@ export default function FlowsPage() {
                   className={`relative flex flex-col rounded-2xl border p-4 transition-colors ${
                     checked
                       ? "border-blue-500/60 ring-1 ring-blue-500/30"
-                      : "border-zinc-800"
+                      : "border-slate-200 dark:border-zinc-800"
                   }`}
                   style={{ backgroundColor: "var(--card)" }}
                 >
@@ -334,22 +334,22 @@ export default function FlowsPage() {
                     className={`absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded border text-xs transition ${
                       checked
                         ? "border-blue-500 bg-blue-500 text-white"
-                        : "border-zinc-600 bg-zinc-800/60 text-transparent hover:border-zinc-400"
+                        : "border-slate-300 dark:border-zinc-600 bg-slate-200 dark:bg-zinc-800/60 text-transparent hover:border-zinc-400"
                     }`}
                     title={checked ? "Remove from comparison" : "Add to comparison"}
                   >
                     {checked && "✓"}
                   </button>
-                  <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
                     {a.category}
                   </span>
-                  <h2 className="mt-1 text-base font-semibold text-white">
+                  <h2 className="mt-1 text-base font-semibold text-slate-900 dark:text-white">
                     {a.name}
                   </h2>
-                  <p className="mt-3 text-2xl font-bold tabular-nums tracking-tight text-white">
+                  <p className="mt-3 text-2xl font-bold tabular-nums tracking-tight text-slate-900 dark:text-white">
                     {formatPrice(a)}
                   </p>
-                  <p className="mt-1 text-xs tabular-nums text-zinc-500">
+                  <p className="mt-1 text-xs tabular-nums text-slate-500 dark:text-zinc-500">
                     {a.marketCap ?? "—"}
                   </p>
                   <div className="mt-3 grid grid-cols-2 gap-2">
@@ -384,16 +384,16 @@ export default function FlowsPage() {
             >
               <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
                     Performance comparison
                   </h2>
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-1 text-sm text-slate-500 dark:text-zinc-500">
                     {compareAssets.length} asset{compareAssets.length !== 1 ? "s" : ""} selected — table sorted by{" "}
                     {compareSortKey.toUpperCase()} change
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex gap-1 rounded-lg border border-zinc-700 p-0.5">
+                  <div className="flex gap-1 rounded-lg border border-slate-300 dark:border-zinc-700 p-0.5">
                     {(["1d", "1w", "1m", "ytd"] as const).map((k) => (
                       <button
                         key={k}
@@ -402,7 +402,7 @@ export default function FlowsPage() {
                         className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
                           compareSortKey === k
                             ? "bg-zinc-100 text-zinc-900"
-                            : "text-zinc-400 hover:text-zinc-200"
+                            : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:text-zinc-200"
                         }`}
                       >
                         {k.toUpperCase()}
@@ -412,7 +412,7 @@ export default function FlowsPage() {
                   <button
                     type="button"
                     onClick={clearCompare}
-                    className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 transition hover:border-zinc-500 hover:text-white"
+                    className="rounded-lg border border-slate-300 dark:border-zinc-700 px-3 py-1.5 text-sm text-slate-600 dark:text-zinc-400 transition hover:border-slate-300 dark:border-zinc-500 hover:text-slate-900 dark:hover:text-slate-900 dark:text-white"
                   >
                     Clear all
                   </button>
@@ -433,7 +433,7 @@ export default function FlowsPage() {
               )}
 
               {compareAssets.length === 0 && (
-                <p className="mb-6 text-sm text-zinc-500">
+                <p className="mb-6 text-sm text-slate-500 dark:text-zinc-500">
                   Loading selected assets…
                 </p>
               )}
@@ -452,9 +452,9 @@ export default function FlowsPage() {
                       ).map(([label, { best, worst }]) => (
                         <div
                           key={label}
-                          className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3"
+                          className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/50 p-3"
                         >
-                          <div className="text-xs font-medium text-zinc-500">{label} Leader</div>
+                          <div className="text-xs font-medium text-slate-500 dark:text-zinc-500">{label} Leader</div>
                           <div className="mt-1 flex items-center gap-1.5">
                             <span className="text-sm font-semibold text-emerald-400">{best.name}</span>
                             <span className="text-xs tabular-nums text-emerald-300">
@@ -476,32 +476,32 @@ export default function FlowsPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-sm">
                       <thead>
-                        <tr className="border-b border-zinc-800 text-left">
-                          <th className="whitespace-nowrap py-2 pr-4 text-xs font-medium text-zinc-500">#</th>
-                          <th className="whitespace-nowrap py-2 pr-4 text-xs font-medium text-zinc-500">Asset</th>
-                          <th className="whitespace-nowrap py-2 pr-4 text-xs font-medium text-zinc-500">Category</th>
-                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">Price</th>
-                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">Mkt Cap</th>
-                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">1D</th>
-                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">1W</th>
-                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">1M</th>
-                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-zinc-500">YTD</th>
-                          <th className="py-2 text-center text-xs font-medium text-zinc-500">Remove</th>
+                        <tr className="border-b border-slate-200 dark:border-zinc-800 text-left">
+                          <th className="whitespace-nowrap py-2 pr-4 text-xs font-medium text-slate-500 dark:text-zinc-500">#</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-xs font-medium text-slate-500 dark:text-zinc-500">Asset</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-xs font-medium text-slate-500 dark:text-zinc-500">Category</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-slate-500 dark:text-zinc-500">Price</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-slate-500 dark:text-zinc-500">Mkt Cap</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-slate-500 dark:text-zinc-500">1D</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-slate-500 dark:text-zinc-500">1W</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-slate-500 dark:text-zinc-500">1M</th>
+                          <th className="whitespace-nowrap py-2 pr-4 text-right text-xs font-medium text-slate-500 dark:text-zinc-500">YTD</th>
+                          <th className="py-2 text-center text-xs font-medium text-slate-500 dark:text-zinc-500">Remove</th>
                         </tr>
                       </thead>
                       <tbody>
                         {compareAssets.map((a, i) => (
                           <tr
                             key={a.id}
-                            className="border-b border-zinc-800/50 transition hover:bg-zinc-800/30"
+                            className="border-b border-slate-200 dark:border-zinc-800/50 transition hover:bg-slate-200 dark:bg-zinc-800/30"
                           >
-                            <td className="py-2.5 pr-4 tabular-nums text-zinc-500">{i + 1}</td>
-                            <td className="py-2.5 pr-4 font-semibold text-white">{a.name}</td>
-                            <td className="py-2.5 pr-4 text-xs text-zinc-500">{a.category}</td>
-                            <td className="py-2.5 pr-4 text-right tabular-nums text-zinc-300">
+                            <td className="py-2.5 pr-4 tabular-nums text-slate-500 dark:text-zinc-500">{i + 1}</td>
+                            <td className="py-2.5 pr-4 font-semibold text-slate-900 dark:text-white">{a.name}</td>
+                            <td className="py-2.5 pr-4 text-xs text-slate-500 dark:text-zinc-500">{a.category}</td>
+                            <td className="py-2.5 pr-4 text-right tabular-nums text-slate-700 dark:text-zinc-300">
                               {formatPrice(a)}
                             </td>
-                            <td className="py-2.5 pr-4 text-right text-xs tabular-nums text-zinc-500">
+                            <td className="py-2.5 pr-4 text-right text-xs tabular-nums text-slate-500 dark:text-zinc-500">
                               {a.marketCap}
                             </td>
                             {(
@@ -510,7 +510,7 @@ export default function FlowsPage() {
                               <td
                                 key={j}
                                 className={`py-2.5 pr-4 text-right tabular-nums font-medium ${
-                                  v > 0 ? "text-emerald-400" : v < 0 ? "text-red-400" : "text-zinc-500"
+                                  v > 0 ? "text-emerald-400" : v < 0 ? "text-red-400" : "text-slate-500 dark:text-zinc-500"
                                 }`}
                               >
                                 {v > 0 ? "+" : ""}
@@ -521,7 +521,7 @@ export default function FlowsPage() {
                               <button
                                 type="button"
                                 onClick={() => removeFromCompare(a.id)}
-                                className="text-zinc-600 transition hover:text-red-400"
+                                className="text-slate-600 dark:text-zinc-600 transition hover:text-red-400"
                                 title="Remove"
                               >
                                 ✕
@@ -538,16 +538,16 @@ export default function FlowsPage() {
           )}
 
           <section className="mt-12">
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
               Capital Flow Visualization
             </h2>
-            <p className="mt-1 text-sm text-zinc-500">
+            <p className="mt-1 text-sm text-slate-500 dark:text-zinc-500">
               1-month momentum tanks (magnitude-scaled); center stream shows
               notional movement from outflows toward inflows.
             </p>
 
             <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_auto_1fr] lg:items-stretch">
-              <div className="flex min-h-[280px] flex-col rounded-2xl border border-zinc-800 p-4"
+              <div className="flex min-h-[280px] flex-col rounded-2xl border border-slate-200 dark:border-zinc-800 p-4"
                 style={{ backgroundColor: "var(--card)" }}
               >
                 <h3 className="text-center text-sm font-semibold text-emerald-400">
@@ -555,7 +555,7 @@ export default function FlowsPage() {
                 </h3>
                 <div className="mt-3 flex flex-1 flex-col gap-3">
                   {inflowAssets.length === 0 ? (
-                    <p className="text-center text-sm text-zinc-500">
+                    <p className="text-center text-sm text-slate-500 dark:text-zinc-500">
                       No inflows in this filter.
                     </p>
                   ) : (
@@ -565,12 +565,12 @@ export default function FlowsPage() {
                       return (
                         <div
                           key={a.id}
-                          className="flows-tank-pulse flex flex-col rounded-xl border border-zinc-800 bg-zinc-950/40 p-3"
+                          className="flows-tank-pulse flex flex-col rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/40 p-3"
                         >
-                          <div className="text-center text-xs font-medium text-zinc-300">
+                          <div className="text-center text-xs font-medium text-slate-700 dark:text-zinc-300">
                             {a.name}
                           </div>
-                          <div className="relative mt-2 h-20 w-full overflow-hidden rounded-lg bg-zinc-900/80">
+                          <div className="relative mt-2 h-20 w-full overflow-hidden rounded-lg bg-slate-50 dark:bg-zinc-900/80">
                             <div
                               className={`absolute bottom-0 left-0 right-0 rounded-b-lg bg-emerald-500/75 ${
                                 animationsStarted ? "flows-fill-up" : ""
@@ -586,7 +586,7 @@ export default function FlowsPage() {
                           <div className="mt-2 text-center text-lg font-bold tabular-nums text-emerald-300">
                             +{a.change1m.toFixed(1)}%
                           </div>
-                          <div className="text-center text-[11px] tabular-nums text-zinc-500">
+                          <div className="text-center text-[11px] tabular-nums text-slate-500 dark:text-zinc-500">
                             {a.marketCap ?? "—"}
                           </div>
                         </div>
@@ -597,7 +597,7 @@ export default function FlowsPage() {
               </div>
 
               <div
-                className="relative flex min-h-[120px] min-w-[56px] items-center justify-center overflow-hidden rounded-2xl border border-zinc-800 lg:min-h-0 lg:w-14"
+                className="relative flex min-h-[120px] min-w-[56px] items-center justify-center overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-800 lg:min-h-0 lg:w-14"
                 style={{ backgroundColor: "var(--card)" }}
                 aria-hidden
               >
@@ -615,7 +615,7 @@ export default function FlowsPage() {
                 </div>
               </div>
 
-              <div className="flex min-h-[280px] flex-col rounded-2xl border border-zinc-800 p-4"
+              <div className="flex min-h-[280px] flex-col rounded-2xl border border-slate-200 dark:border-zinc-800 p-4"
                 style={{ backgroundColor: "var(--card)" }}
               >
                 <h3 className="text-center text-sm font-semibold text-red-400">
@@ -623,7 +623,7 @@ export default function FlowsPage() {
                 </h3>
                 <div className="mt-3 flex flex-1 flex-col gap-3">
                   {outflowAssets.length === 0 ? (
-                    <p className="text-center text-sm text-zinc-500">
+                    <p className="text-center text-sm text-slate-500 dark:text-zinc-500">
                       No outflows in this filter.
                     </p>
                   ) : (
@@ -633,12 +633,12 @@ export default function FlowsPage() {
                       return (
                         <div
                           key={a.id}
-                          className="flows-tank-pulse flex flex-col rounded-xl border border-zinc-800 bg-zinc-950/40 p-3"
+                          className="flows-tank-pulse flex flex-col rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/40 p-3"
                         >
-                          <div className="text-center text-xs font-medium text-zinc-300">
+                          <div className="text-center text-xs font-medium text-slate-700 dark:text-zinc-300">
                             {a.name}
                           </div>
-                          <div className="relative mt-2 h-20 w-full overflow-hidden rounded-lg bg-zinc-900/80">
+                          <div className="relative mt-2 h-20 w-full overflow-hidden rounded-lg bg-slate-50 dark:bg-zinc-900/80">
                             <div
                               className={`absolute bottom-0 left-0 right-0 rounded-b-lg bg-red-500/75 ${
                                 animationsStarted ? "flows-drain-down" : ""
@@ -654,7 +654,7 @@ export default function FlowsPage() {
                           <div className="mt-2 text-center text-lg font-bold tabular-nums text-red-300">
                             {a.change1m.toFixed(1)}%
                           </div>
-                          <div className="text-center text-[11px] tabular-nums text-zinc-500">
+                          <div className="text-center text-[11px] tabular-nums text-slate-500 dark:text-zinc-500">
                             {a.marketCap ?? "—"}
                           </div>
                         </div>
@@ -665,15 +665,15 @@ export default function FlowsPage() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-zinc-800 p-4"
+            <div className="mt-6 rounded-2xl border border-slate-200 dark:border-zinc-800 p-4"
               style={{ backgroundColor: "var(--card)" }}
             >
-              <div className="mb-2 flex items-center justify-between text-xs font-medium text-zinc-400">
+              <div className="mb-2 flex items-center justify-between text-xs font-medium text-slate-600 dark:text-zinc-400">
                 <span className="text-emerald-400">Risk On</span>
-                <span className="text-zinc-500">Net Flow Summary</span>
+                <span className="text-slate-500 dark:text-zinc-500">Net Flow Summary</span>
                 <span className="text-red-400">Risk Off</span>
               </div>
-              <div className="flex h-4 w-full overflow-hidden rounded-full bg-zinc-900 ring-1 ring-zinc-800">
+              <div className="flex h-4 w-full overflow-hidden rounded-full bg-white dark:bg-zinc-900 ring-1 ring-slate-200 dark:ring-zinc-800">
                 <div
                   className="flows-net-green h-full rounded-l-full bg-emerald-500/90"
                   style={{
@@ -691,8 +691,8 @@ export default function FlowsPage() {
           </section>
 
           <section className="mt-12">
-            <h2 className="text-lg font-semibold text-white">Market Heatmap</h2>
-            <p className="mt-1 text-sm text-zinc-500">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Market Heatmap</h2>
+            <p className="mt-1 text-sm text-slate-500 dark:text-zinc-500">
               Rectangle size reflects relative importance; color follows 1-month
               performance.
             </p>
@@ -710,7 +710,7 @@ export default function FlowsPage() {
                     }`}
                     style={{ flex: `${w} 1 120px` }}
                   >
-                    <div className="text-xs font-semibold text-zinc-200">
+                    <div className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
                       {a.name}
                     </div>
                     <div
@@ -721,7 +721,7 @@ export default function FlowsPage() {
                       {a.change1m > 0 ? "+" : ""}
                       {a.change1m.toFixed(1)}%
                     </div>
-                    <div className="mt-0.5 text-[10px] text-zinc-500">
+                    <div className="mt-0.5 text-[10px] text-slate-500 dark:text-zinc-500">
                       1M
                     </div>
                   </div>

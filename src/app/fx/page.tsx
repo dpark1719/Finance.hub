@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type FxHistory = {
@@ -141,7 +140,7 @@ function InteractiveChart({
   if (clean.length < 2) {
     return (
       <div
-        className={`flex h-40 items-center justify-center text-xs text-zinc-500 ${className ?? ""}`}
+        className={`flex h-40 items-center justify-center text-xs text-slate-500 dark:text-zinc-500 ${className ?? ""}`}
       >
         No chart data
       </div>
@@ -234,13 +233,13 @@ function InteractiveChart({
       </svg>
       {hover && (
         <div className="pointer-events-none absolute left-0 top-0 z-10 -translate-y-full px-1 pb-1" style={{ left: `${(hover.x / W) * 100}%`, top: `${(hover.y / H) * 100}%`, transform: "translate(-50%, -110%)" }}>
-          <div className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-xs shadow-lg">
-            <p className="font-mono font-medium text-white">{hover.value.toLocaleString(undefined, { maximumFractionDigits: 6 })}</p>
-            <p className="text-zinc-400">{hover.date}</p>
+          <div className="rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs shadow-lg">
+            <p className="font-mono font-medium text-slate-900 dark:text-white">{hover.value.toLocaleString(undefined, { maximumFractionDigits: 6 })}</p>
+            <p className="text-slate-600 dark:text-zinc-400">{hover.date}</p>
           </div>
         </div>
       )}
-      <div className="mt-1 flex justify-between text-[10px] text-zinc-500">
+      <div className="mt-1 flex justify-between text-[10px] text-slate-500 dark:text-zinc-500">
         <span>{clean[0].date}</span>
         <span>{clean[clean.length - 1].date}</span>
       </div>
@@ -443,22 +442,22 @@ export default function FxPage() {
     const historyDates = data?.history?.dates ?? [];
 
     return (
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
+      <div className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/95 dark:bg-zinc-900/40 p-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">{label}</p>
         {gridLoading && !data ? (
-          <p className="mt-2 text-sm text-zinc-500">Loading…</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-zinc-500">Loading…</p>
         ) : direct === null ? (
-          <p className="mt-2 text-sm text-zinc-500">No data available</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-zinc-500">No data available</p>
         ) : (
           <>
-            <p className="mt-2 font-mono text-lg text-white">
+            <p className="mt-2 font-mono text-lg text-slate-900 dark:text-white">
               1 {baseCode} = {direct.toLocaleString(undefined, { maximumFractionDigits: 4 })} {quoteCode}
             </p>
-            <p className="mt-1 font-mono text-sm text-zinc-400">
+            <p className="mt-1 font-mono text-sm text-slate-600 dark:text-zinc-400">
               1 {quoteCode} = {inverse !== null ? inverse.toLocaleString(undefined, { maximumFractionDigits: 8 }) : "—"} {baseCode}
             </p>
-            <p className="mt-2 text-xs text-zinc-500">Updated: {formatTs(updatedAt)}</p>
-            <div className="mt-3 border-t border-zinc-800/80 pt-3">
+            <p className="mt-2 text-xs text-slate-500 dark:text-zinc-500">Updated: {formatTs(updatedAt)}</p>
+            <div className="mt-3 border-t border-slate-200 dark:border-zinc-800/80 pt-3">
               <div className="mb-2 flex flex-wrap gap-1">
                 {RANGE_BUTTONS.map(({ value, label: btnLabel }) => (
                   <button
@@ -469,7 +468,7 @@ export default function FxPage() {
                     className={`rounded-md px-2 py-1 text-xs font-medium transition disabled:opacity-50 ${
                       range === value
                         ? "bg-blue-600 text-white"
-                        : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                        : "bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-300 dark:hover:bg-zinc-700"
                     }`}
                   >
                     {btnLabel}
@@ -487,44 +486,41 @@ export default function FxPage() {
   };
 
   return (
-    <main
-      className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6"
-      style={{ "--background": "#0c0f14", "--card": "#151a22" } as CSSProperties}
-    >
-      <header className="mb-10 border-b border-zinc-800 pb-8">
-        <p className="font-mono text-xs uppercase tracking-widest text-zinc-500">Travel money</p>
+    <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
+      <header className="mb-10 border-b border-slate-200 dark:border-zinc-800 pb-8">
+        <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">Travel money</p>
         <h1
-          className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl"
+          className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
           style={{ fontFamily: "var(--font-dm-sans), system-ui" }}
         >
           Currency Exchange
         </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
           Live mid-market rates from the European Central Bank via Frankfurter. Compare pairs and
           hover over charts to see exact rates on any date.
         </p>
       </header>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 sm:p-6">
+      <section className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-900/60 p-4 sm:p-6">
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-zinc-500">Amount</label>
+            <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">Amount</label>
             <input
               type="number"
               min={0}
               step="any"
               value={amountStr}
               onChange={(e) => setAmountStr(e.target.value)}
-              className="mt-1 w-full max-w-xs rounded-lg border border-zinc-700 bg-[var(--card)] px-3 py-2 text-white outline-none ring-blue-500/0 transition focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30"
+              className="mt-1 w-full max-w-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-[var(--card)] px-3 py-2 text-slate-900 dark:text-white outline-none ring-blue-500/0 transition focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30"
             />
           </div>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div className="min-w-0 flex-1">
-              <label className="block text-xs font-medium text-zinc-500">From</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">From</label>
               <select
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-zinc-700 bg-[var(--card)] px-3 py-2 text-white outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30"
+                className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-[var(--card)] px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
@@ -535,18 +531,18 @@ export default function FxPage() {
               <button
                 type="button"
                 onClick={swap}
-                className="rounded-lg border border-zinc-600 bg-zinc-800/80 px-4 py-2 text-sm font-medium text-zinc-200 transition hover:bg-zinc-700"
+                className="rounded-lg border border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800/80 px-4 py-2 text-sm font-medium text-slate-800 dark:text-zinc-200 transition hover:bg-slate-200 dark:hover:bg-zinc-700"
                 aria-label="Swap currencies"
               >
                 ⇄ Swap
               </button>
             </div>
             <div className="min-w-0 flex-1">
-              <label className="block text-xs font-medium text-zinc-500">To</label>
+              <label className="block text-xs font-medium text-slate-500 dark:text-zinc-500">To</label>
               <select
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-zinc-700 bg-[var(--card)] px-3 py-2 text-white outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30"
+                className="mt-1 w-full rounded-lg border border-slate-300 dark:border-zinc-700 bg-[var(--card)] px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-blue-500/60 focus:ring-2 focus:ring-blue-500/30"
               >
                 {CURRENCIES.map((c) => (
                   <option key={c} value={c}>{c}</option>
@@ -561,7 +557,7 @@ export default function FxPage() {
             type="button"
             onClick={() => void handleConvert()}
             disabled={convertLoading}
-            className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500 disabled:opacity-60"
+            className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-slate-900 dark:text-white shadow-sm transition hover:bg-blue-500 disabled:opacity-60"
           >
             {convertLoading ? "Converting…" : "Convert"}
           </button>
@@ -569,13 +565,13 @@ export default function FxPage() {
         </div>
 
         {displayConverted !== null && (
-          <div className="mt-8 rounded-xl border border-zinc-800/80 bg-black/20 p-6">
-            <p className="text-sm text-zinc-500">You receive</p>
-            <p className="mt-1 break-words text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+          <div className="mt-8 rounded-xl border border-slate-200 dark:border-zinc-800/80 bg-black/20 p-6">
+            <p className="text-sm text-slate-500 dark:text-zinc-500">You receive</p>
+            <p className="mt-1 break-words text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
               {displayConverted.toLocaleString(undefined, { maximumFractionDigits: 4 })}{" "}
-              <span className="text-xl font-medium text-zinc-400 sm:text-2xl">{to}</span>
+              <span className="text-xl font-medium text-slate-600 dark:text-zinc-400 sm:text-2xl">{to}</span>
             </p>
-            <p className="mt-2 text-xs text-zinc-500">
+            <p className="mt-2 text-xs text-slate-500 dark:text-zinc-500">
               Rate date: {result?.date ?? "—"} · Base {result?.base ?? "—"}
             </p>
           </div>
@@ -583,8 +579,8 @@ export default function FxPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-lg font-semibold text-white">Popular pairs</h2>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Popular pairs</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-zinc-500">
           Hover over charts to see exact rates. Select a time range below each chart.
         </p>
         {gridError && <p className="mt-4 text-sm text-red-400">{gridError}</p>}
@@ -597,17 +593,17 @@ export default function FxPage() {
 
       {/* ── 2026 Projections ─────────────────────────────── */}
       <section className="mt-12">
-        <h2 className="text-lg font-semibold text-white">2026 Consensus Projections</h2>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">2026 Consensus Projections</h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-zinc-500">
           Wall Street and major bank forecasts compiled as of Q1 2026. Projections are mid-range consensus — actual outcomes depend on the catalysts listed below.
         </p>
         <div className="mt-6 grid gap-5 lg:grid-cols-3">
           {FX_PROJECTIONS.map((proj) => (
-            <div key={proj.pair} className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+            <div key={proj.pair} className="rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/95 dark:bg-zinc-900/40 p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{proj.pair}</p>
-                  <p className="mt-1 font-mono text-xl font-semibold text-white">{proj.target}</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">{proj.pair}</p>
+                  <p className="mt-1 font-mono text-xl font-semibold text-slate-900 dark:text-white">{proj.target}</p>
                 </div>
                 <span
                   className="mt-1 shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider"
@@ -621,13 +617,13 @@ export default function FxPage() {
                 </span>
               </div>
 
-              <p className="mt-3 text-sm leading-relaxed text-zinc-300">{proj.summary}</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-zinc-300">{proj.summary}</p>
 
               <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Key Drivers</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-500">Key Drivers</p>
                 <ul className="mt-2 space-y-1.5">
                   {proj.reasons.map((r, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-300">
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-700 dark:text-zinc-300">
                       <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: proj.biasColor }} />
                       {r}
                     </li>
@@ -635,12 +631,12 @@ export default function FxPage() {
                 </ul>
               </div>
 
-              <div className="mt-4 border-t border-zinc-800 pt-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Events to Watch</p>
+              <div className="mt-4 border-t border-slate-200 dark:border-zinc-800 pt-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-zinc-500">Events to Watch</p>
                 <ul className="mt-2 space-y-1.5">
                   {proj.catalysts.map((c, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-400">
-                      <span className="mt-0.5 shrink-0 text-zinc-600">{c.type === "confirm" ? "✓" : "✗"}</span>
+                    <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-zinc-400">
+                      <span className="mt-0.5 shrink-0 text-slate-600 dark:text-zinc-600">{c.type === "confirm" ? "✓" : "✗"}</span>
                       <span>
                         <span className={c.type === "confirm" ? "text-green-400/80" : "text-red-400/80"}>{c.type === "confirm" ? "Confirms" : "Denies"}</span>
                         {" — "}{c.event}
@@ -653,7 +649,7 @@ export default function FxPage() {
           ))}
         </div>
 
-        <p className="mt-6 text-xs text-zinc-600">
+        <p className="mt-6 text-xs text-slate-600 dark:text-zinc-600">
           Sources: Goldman Sachs, Morgan Stanley, JPMorgan, Barclays, ING, MUFG, Nomura Research, Reuters polls. Forecasts are not financial advice and carry significant uncertainty.
         </p>
       </section>

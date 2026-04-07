@@ -2,7 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Default = light (no `dark` class on <html>). Dark = current zinc aesthetic. */
 :root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --muted: #64748b;
+  --accent: #2563eb;
+  --grade-a: #15803d;
+  --grade-b: #65a30d;
+  --grade-c: #a16207;
+  --grade-d: #c2410c;
+  --grade-f: #dc2626;
+}
+
+.dark {
   --background: #0c0f14;
   --foreground: #e8eaed;
   --card: #151a22;
