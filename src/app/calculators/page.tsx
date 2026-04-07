@@ -511,7 +511,7 @@ export default function CalculatorsPage() {
 
   return (
     <main
-      className="min-h-screen text-white"
+      className="min-h-screen min-w-0 text-white"
       style={
         {
           backgroundColor: "var(--background, #0c0f14)",
@@ -522,7 +522,7 @@ export default function CalculatorsPage() {
         } as CSSProperties
       }
     >
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           Financial calculators
         </h1>
@@ -536,7 +536,7 @@ export default function CalculatorsPage() {
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:px-4 ${
+              className={`touch-manipulation rounded-lg px-3 py-2.5 text-sm font-medium transition-colors sm:px-4 sm:py-2 ${
                 tab === t.id
                   ? "bg-blue-600 text-white"
                   : "bg-zinc-800 text-zinc-400 hover:text-zinc-200"

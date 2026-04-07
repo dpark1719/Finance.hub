@@ -219,7 +219,7 @@ export default function FlowsPage() {
   }, [compareAssets]);
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <main className="mx-auto min-w-0 max-w-6xl px-4 py-10 sm:px-6">
       <style>{`
         @keyframes fillUp {
           from {

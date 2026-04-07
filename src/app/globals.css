@@ -15,7 +15,24 @@
   --grade-f: #ef4444;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: clip;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
+  overflow-x: clip;
+}
+
+/* Avoid iOS Safari zooming focused inputs that use <16px text */
+@media (max-width: 639px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 1rem !important;
+    line-height: 1.5;
+  }
 }

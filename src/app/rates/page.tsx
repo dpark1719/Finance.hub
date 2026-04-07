@@ -108,7 +108,7 @@ export default function RatesPage() {
   }, [fed, boj, bok]);
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-4 py-10 sm:px-6">
+    <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-zinc-800 pb-8">
         <p className="font-mono text-xs uppercase tracking-widest text-zinc-500">
           Macro

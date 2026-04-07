@@ -488,7 +488,7 @@ export default function FxPage() {
 
   return (
     <main
-      className="mx-auto min-h-screen max-w-5xl px-4 py-10 sm:px-6"
+      className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6"
       style={{ "--background": "#0c0f14", "--card": "#151a22" } as CSSProperties}
     >
       <header className="mb-10 border-b border-zinc-800 pb-8">
@@ -505,7 +505,7 @@ export default function FxPage() {
         </p>
       </header>
 
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-6">
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 sm:p-6">
         <div className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-zinc-500">Amount</label>
@@ -571,9 +571,9 @@ export default function FxPage() {
         {displayConverted !== null && (
           <div className="mt-8 rounded-xl border border-zinc-800/80 bg-black/20 p-6">
             <p className="text-sm text-zinc-500">You receive</p>
-            <p className="mt-1 text-4xl font-semibold tracking-tight text-white">
+            <p className="mt-1 break-words text-3xl font-semibold tracking-tight text-white sm:text-4xl">
               {displayConverted.toLocaleString(undefined, { maximumFractionDigits: 4 })}{" "}
-              <span className="text-2xl font-medium text-zinc-400">{to}</span>
+              <span className="text-xl font-medium text-zinc-400 sm:text-2xl">{to}</span>
             </p>
             <p className="mt-2 text-xs text-zinc-500">
               Rate date: {result?.date ?? "—"} · Base {result?.base ?? "—"}

@@ -55,7 +55,7 @@ export default function Home() {
   }, [q]);
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-4 py-10 sm:px-6">
+    <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-zinc-800 pb-8">
         <p className="font-mono text-xs uppercase tracking-widest text-zinc-500">
           Stock report card
@@ -85,13 +85,13 @@ export default function Home() {
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && run()}
             placeholder="Company or ticker (apple, Google, AAPL, 7203.T)"
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900/80 px-4 py-3 font-mono text-sm text-white outline-none ring-blue-500/30 placeholder:text-zinc-600 focus:border-blue-500/50 focus:ring-2 sm:max-w-md"
+            className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900/80 px-4 py-3 font-mono text-base text-white outline-none ring-blue-500/30 placeholder:text-zinc-600 focus:border-blue-500/50 focus:ring-2 sm:max-w-md sm:text-sm"
           />
           <button
             type="button"
             onClick={run}
             disabled={loading || !q.trim()}
-            className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="touch-manipulation shrink-0 rounded-lg bg-blue-600 px-5 py-3 text-base font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
           >
             {loading ? "Loading…" : "Run report"}
           </button>
@@ -109,24 +109,24 @@ export default function Home() {
 
       {report && report.symbol && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-semibold text-white">
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <h2 className="break-words text-xl font-semibold text-white sm:text-2xl">
                   {report.name ?? report.symbol}
                 </h2>
-                <p className="mt-1 font-mono text-sm text-zinc-400">
+                <p className="mt-1 break-all font-mono text-xs text-zinc-400 sm:text-sm">
                   {report.symbol}
                   {report.exchange ? ` · ${report.exchange}` : ""}
                   {report.currency ? ` · ${report.currency}` : ""}
                 </p>
                 {report.resolutionNote && (
-                  <p className="mt-2 text-sm text-blue-300/90">{report.resolutionNote}</p>
+                  <p className="mt-2 break-words text-sm text-blue-300/90">{report.resolutionNote}</p>
                 )}
               </div>
-              <div className="text-right">
+              <div className="shrink-0 text-left sm:text-right">
                 {report.lastPrice != null && (
-                  <p className="text-2xl font-semibold tabular-nums text-white">
+                  <p className="text-xl font-semibold tabular-nums text-white sm:text-2xl">
                     {report.lastPrice.toLocaleString(undefined, {
                       style: "currency",
                       currency: report.currency || "USD",
@@ -143,7 +143,7 @@ export default function Home() {
           <StockPriceChart symbol={report.symbol} />
 
           {report.warnings.length > 0 && (
-            <ul className="list-inside list-disc rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-100/90">
+            <ul className="list-outside space-y-1.5 rounded-lg border border-amber-500/25 bg-amber-500/5 py-3 pl-6 pr-4 text-sm text-amber-100/90 sm:list-inside sm:space-y-0 sm:px-4 sm:pl-4">
               {report.warnings.map((w) => (
                 <li key={w}>{w}</li>
               ))}

@@ -509,7 +509,7 @@ export default function LifestylePage() {
     : [];
 
   return (
-    <main className="mx-auto min-h-screen max-w-5xl px-4 py-10 sm:px-6">
+    <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
       {/* ── Header ──────────────────────────────────────── */}
       <header className="mb-10 border-b border-zinc-800 pb-8">
         <p className="font-mono text-xs uppercase tracking-widest text-zinc-500">
@@ -545,7 +545,7 @@ export default function LifestylePage() {
               onFocus={() => setShowDropdown(true)}
               onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
               placeholder={`Search ${CITIES.length.toLocaleString("en-US")} cities…`}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-sm text-white outline-none ring-blue-500/30 placeholder:text-zinc-600 focus:border-blue-500/50 focus:ring-2"
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-base text-white outline-none ring-blue-500/30 placeholder:text-zinc-600 focus:border-blue-500/50 focus:ring-2 sm:text-sm"
             />
             {showDropdown && filteredCities.length > 0 && (
               <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-auto rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl">
@@ -575,7 +575,7 @@ export default function LifestylePage() {
             <select
               value={income}
               onChange={(e) => setIncome(e.target.value ? Number(e.target.value) : "")}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-sm text-white outline-none ring-blue-500/30 focus:border-blue-500/50 focus:ring-2"
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-base text-white outline-none ring-blue-500/30 focus:border-blue-500/50 focus:ring-2 sm:text-sm"
             >
               <option value="">Select...</option>
               {INCOME_LEVELS.map((l) => (
@@ -594,7 +594,7 @@ export default function LifestylePage() {
             <select
               value={household}
               onChange={(e) => setHousehold(Number(e.target.value))}
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-sm text-white outline-none ring-blue-500/30 focus:border-blue-500/50 focus:ring-2"
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/80 px-4 py-3 text-base text-white outline-none ring-blue-500/30 focus:border-blue-500/50 focus:ring-2 sm:text-sm"
             >
               {[1, 2, 3, 4, 5, 6].map((n) => (
                 <option key={n} value={n}>
@@ -610,7 +610,7 @@ export default function LifestylePage() {
               type="button"
               onClick={calculate}
               disabled={loading || !selectedCity || !income}
-              className="w-full rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className="touch-manipulation w-full rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:text-sm"
             >
               {loading ? "Calculating..." : "Calculate"}
             </button>

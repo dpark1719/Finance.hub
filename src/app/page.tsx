@@ -190,7 +190,7 @@ const sections: Section[] = [
 
 export default function Home() {
   return (
-    <main className="mx-auto min-h-screen max-w-6xl px-4 py-12 sm:px-6">
+    <main className="mx-auto min-h-screen min-w-0 max-w-6xl px-4 py-12 sm:px-6">
       <header className="mb-12 text-center sm:mb-14 sm:text-left">
         <h1
           className="text-4xl font-semibold tracking-tight text-white sm:text-5xl"
@@ -208,7 +208,7 @@ export default function Home() {
           <Link
             key={s.href}
             href={s.href}
-            className="group block rounded-xl border border-zinc-800 bg-[var(--card)] p-6 shadow-sm transition hover:scale-[1.02] hover:border-zinc-600"
+            className="group block rounded-xl border border-zinc-800 bg-[var(--card)] p-6 shadow-sm transition hover:border-zinc-600 sm:hover:scale-[1.02]"
           >
             <IconWrap>{s.icon}</IconWrap>
             <h2 className="text-lg font-semibold text-white">{s.title}</h2>
