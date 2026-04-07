@@ -12,7 +12,10 @@
     "generate:lifestyle": "node scripts/generate-lifestyle-cities.mjs",
     "generate:col-extremes": "node scripts/generate-lifestyle-col-extremes.mjs",
     "generate:sp500": "node scripts/generate-sp500-lookup.mjs",
-    "generate:kospi": "node scripts/generate-kospi-lookup.mjs"
+    "generate:kospi": "node scripts/generate-kospi-lookup.mjs",
+    "supabase:login": "npx supabase login",
+    "supabase:link": "npx supabase link",
+    "supabase:db:push": "npx supabase db push"
   },
   "dependencies": {
     "@supabase/ssr": "^0.6.1",
