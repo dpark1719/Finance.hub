@@ -1,0 +1,20 @@
+---
+description: After code or config changes, commit and push to GitHub (when safe).
+alwaysApply: true
+---
+
+# Auto commit and push after agent work
+
+When **this turn** added or changed tracked project files (code, config, assets, rules—not chat-only answers):
+
+1. **Skip** if the user asked not to commit/push, or there is nothing to commit, or the turn was **only** explanation / Q&A with **no** file edits.
+2. **Never** stage or commit secrets: `.env*.local`, API keys, or credentials (they should stay gitignored; do not force-add them).
+3. Run from the repo root:
+   - `git status` — confirm what changed.
+   - `git add` only appropriate paths (avoid unrelated dirty files when possible).
+   - `git commit -m "…"` with a short, accurate message (present tense or imperative, full sentences if multi-line body needed).
+4. **Push:** This repo may use `core.hooksPath .githooks` so `post-commit` already runs `git push`. After `git commit`, if push did not run or failed, run `git push` to `origin` (or the current branch’s upstream).
+
+If commit would be empty, do not commit.
+
+If push fails (auth, network), tell the user the commit exists locally and how to retry.
