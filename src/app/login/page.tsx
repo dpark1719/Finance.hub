@@ -29,7 +29,20 @@ function LoginForm() {
         options: { redirectTo: `${origin}/auth/callback` },
       });
       setLoading(null);
-      if (error) setMessage(error.message);
+      if (error) {
+        const m = error.message ?? "";
+        if (
+          m.includes("not enabled") ||
+          m.includes("validation_failed") ||
+          m.includes("Unsupported provider")
+        ) {
+          setMessage(
+            `${provider === "google" ? "Google" : "Apple"} sign-in is off in Supabase. Dashboard → Authentication → Providers → ${provider === "google" ? "Google" : "Apple"}: enable it and paste OAuth Client ID + Secret (from Google Cloud / Apple Developer). Authorized redirect URI in Google must be your Supabase callback URL (shown in the provider settings).`,
+          );
+        } else {
+          setMessage(m);
+        }
+      }
     },
     [origin],
   );
