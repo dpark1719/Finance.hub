@@ -77,10 +77,10 @@ function formatPrice(a: FlowAsset): string {
 
 function pctClass(v: number): string {
   if (v > 0)
-    return "bg-emerald-500/12 text-emerald-800 ring-emerald-600/25 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-400/30";
+    return "bg-emerald-500/10 text-emerald-800 ring-emerald-600/15 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-400/15";
   if (v < 0)
-    return "bg-red-500/12 text-red-800 ring-red-600/25 dark:bg-red-500/15 dark:text-red-300 dark:ring-red-400/30";
-  return "bg-slate-100 text-slate-700 ring-slate-300/70 dark:bg-zinc-800/80 dark:text-zinc-300 dark:ring-zinc-600/50";
+    return "bg-red-500/10 text-red-800 ring-red-600/15 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-400/15";
+  return "bg-slate-500/10 text-slate-700 ring-slate-500/15 dark:bg-zinc-400/10 dark:text-zinc-300 dark:ring-zinc-500/15";
 }
 
 function flowDirectionFor(a: FlowAsset): FlowDirection {
