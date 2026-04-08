@@ -96,8 +96,20 @@ const icons = {
       aria-hidden
     >
       <circle cx="12" cy="13" r="6.5" />
-      <path fill="none" d="M5.8 9.8 L3.2 4.8 L8.8 7.2z" />
-      <path fill="none" d="M18.2 9.8 L20.8 4.8 L15.2 7.2z" />
+      <ellipse
+        cx="5.35"
+        cy="8.1"
+        rx="2.05"
+        ry="2.45"
+        transform="rotate(-24 5.35 8.1)"
+      />
+      <ellipse
+        cx="18.65"
+        cy="8.1"
+        rx="2.05"
+        ry="2.45"
+        transform="rotate(24 18.65 8.1)"
+      />
       <circle cx="9.25" cy="12" r="1" />
       <circle cx="14.75" cy="12" r="1" />
       <ellipse cx="12" cy="16.25" rx="3" ry="2" />
