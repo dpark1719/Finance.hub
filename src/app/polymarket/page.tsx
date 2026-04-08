@@ -241,13 +241,13 @@ export default function PolymarketPage() {
   }, [loadMarkets]);
 
   return (
-    <main className="mx-auto min-h-screen min-w-0 w-full max-w-screen-2xl px-4 py-10 sm:px-6">
+    <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-slate-200 dark:border-zinc-800 pb-8">
-        <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
+        <p className="max-w-2xl font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
           finance.hub · Real-time probabilities
         </p>
         <h1
-          className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
+          className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
           style={{ fontFamily: "var(--font-dm-sans), system-ui" }}
         >
           Top markets by 24h volume
@@ -269,7 +269,7 @@ export default function PolymarketPage() {
           Data auto-refreshes about every {POLL_MS / 1000}s while this tab is visible (Polymarket Gamma — no API key).
         </p>
         {fetchedAt && (
-          <p className="mt-2 font-mono text-xs text-slate-500 dark:text-zinc-600">
+          <p className="mt-2 max-w-2xl font-mono text-xs text-slate-500 dark:text-zinc-600">
             Last updated {new Date(fetchedAt).toLocaleString()}
           </p>
         )}
@@ -400,7 +400,7 @@ export default function PolymarketPage() {
       )}
 
       <footer className="mt-12 border-t border-slate-200 dark:border-zinc-800 pt-8 text-xs text-slate-600 dark:text-zinc-600">
-        <p>
+        <p className="max-w-2xl">
           Polymarket is a third-party platform. Volume and prices are as reported by Polymarket Gamma; finance.hub does not
           operate markets or custody funds.
         </p>
