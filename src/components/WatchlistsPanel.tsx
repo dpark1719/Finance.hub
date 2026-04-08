@@ -10,8 +10,19 @@ export function WatchlistsPanel(props: {
   /** Increment to add `tickerToAdd` to the active list (e.g. button click). */
   addRequest?: number;
   tickerToAdd?: string;
+  /** Load stock report for this symbol (e.g. stocks page). */
+  onSelectSymbol?: (symbol: string) => void;
+  /** Highlight row matching the open report symbol. */
+  selectedSymbol?: string | null;
+  className?: string;
 }) {
-  const { addRequest = 0, tickerToAdd = "" } = props;
+  const {
+    addRequest = 0,
+    tickerToAdd = "",
+    onSelectSymbol,
+    selectedSymbol = null,
+    className = "",
+  } = props;
   const { user, ready, configured } = useSupabaseUser();
   const [lists, setLists] = useState<WatchlistRow[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -153,8 +164,12 @@ export function WatchlistsPanel(props: {
     return null;
   }
 
+  const selectedUpper = selectedSymbol?.trim().toUpperCase() ?? "";
+
   return (
-    <section className="mb-8 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/90 dark:bg-zinc-900/50 p-4 sm:p-5">
+    <section
+      className={`rounded-2xl border border-slate-200 dark:border-zinc-800 bg-slate-50/90 dark:bg-zinc-900/50 p-4 sm:p-5 ${className}`}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Watchlists</h2>
@@ -233,24 +248,45 @@ export function WatchlistsPanel(props: {
             </button>
           </div>
           {active.symbols.length > 0 ? (
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {active.symbols.map((sym) => (
-                <li
-                  key={sym}
-                  className="inline-flex items-center gap-1 rounded-full border border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2.5 py-1 font-mono text-xs text-slate-800 dark:text-zinc-200"
-                >
-                  {sym}
-                  <button
-                    type="button"
-                    onClick={() => removeSymbol(sym)}
-                    className="ml-0.5 rounded p-0.5 text-slate-500 hover:bg-slate-200 dark:hover:bg-zinc-800"
-                    aria-label={`Remove ${sym}`}
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-3 min-h-0">
+              <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">
+                Tap a symbol to open report
+              </p>
+              <ul
+                className="max-h-[min(32rem,calc(100dvh-12rem))] space-y-1 overflow-y-auto rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/40 p-1"
+                role="list"
+              >
+                {active.symbols.map((sym) => {
+                  const isSelected = selectedUpper !== "" && sym.toUpperCase() === selectedUpper;
+                  return (
+                    <li key={sym} className="flex min-w-0 items-stretch gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => onSelectSymbol?.(sym)}
+                        className={`min-w-0 flex-1 rounded-lg px-3 py-2.5 text-left font-mono text-sm transition hover:bg-slate-100 dark:hover:bg-zinc-800/80 ${
+                          isSelected
+                            ? "bg-blue-500/15 text-blue-800 ring-1 ring-blue-500/40 dark:text-blue-200 dark:ring-blue-400/30"
+                            : "text-slate-900 dark:text-zinc-100"
+                        }`}
+                      >
+                        {sym}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeSymbol(sym);
+                        }}
+                        className="shrink-0 rounded-lg px-2.5 py-2 text-slate-500 hover:bg-red-500/10 hover:text-red-600 dark:text-zinc-500 dark:hover:text-red-400"
+                        aria-label={`Remove ${sym}`}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           ) : (
             <p className="mt-3 text-xs text-slate-500 dark:text-zinc-500">No symbols yet.</p>
           )}

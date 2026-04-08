@@ -2,6 +2,7 @@
 
 import type { LetterGrade, StockReport } from "@/types/report";
 import { WatchlistsPanel } from "@/components/WatchlistsPanel";
+import { useSupabaseUser } from "@/lib/hooks/useSupabaseUser";
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
 
@@ -40,6 +41,9 @@ const gradeStyles: Record<LetterGrade, string> = {
 };
 
 export default function Home() {
+  const { user, ready, configured } = useSupabaseUser();
+  const showWatchlistColumn = Boolean(configured && ready && user);
+
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<StockReport | null>(null);
@@ -76,6 +80,14 @@ export default function Home() {
     [run],
   );
 
+  const onWatchlistSymbol = useCallback(
+    (sym: string) => {
+      setQ(sym);
+      void run(sym);
+    },
+    [run],
+  );
+
   /** Symbol to add via Watchlist +: search box if non-empty, else last resolved report ticker. */
   const watchTicker = useMemo(() => {
     const qq = q.trim();
@@ -85,7 +97,7 @@ export default function Home() {
   }, [q, report?.symbol]);
 
   return (
-    <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
+    <main className="mx-auto min-h-screen min-w-0 max-w-7xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-slate-200 dark:border-zinc-800 pb-8">
         <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
           finance.hub · Stocks
@@ -140,102 +152,125 @@ export default function Home() {
         </div>
       </header>
 
-      <WatchlistsPanel addRequest={watchAddRequest} tickerToAdd={watchTicker} />
-
-      <Sp500Heatmap onSelectSymbol={onHeatmapSymbol} />
-
-      {err && (
+      <div
+        className={
+          showWatchlistColumn ? "grid gap-8 lg:grid-cols-2 lg:items-start" : undefined
+        }
+      >
         <div
-          className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
-          role="alert"
+          className={`min-w-0 space-y-6 ${showWatchlistColumn ? "order-2 lg:order-1" : ""}`}
         >
-          {err}
-        </div>
-      )}
+          <Sp500Heatmap onSelectSymbol={onHeatmapSymbol} />
 
-      {report && report.symbol && (
-        <div className="space-y-6">
-          <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/95 dark:bg-zinc-900/40 p-4 sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-              <div className="min-w-0">
-                <h2 className="break-words text-xl font-semibold text-slate-900 dark:text-white sm:text-2xl">
-                  {report.name ?? report.symbol}
-                </h2>
-                <p className="mt-1 break-all font-mono text-xs text-slate-600 dark:text-zinc-400 sm:text-sm">
-                  {report.symbol}
-                  {report.exchange ? ` · ${report.exchange}` : ""}
-                  {report.currency ? ` · ${report.currency}` : ""}
-                </p>
-                {report.resolutionNote && (
-                  <p className="mt-2 break-words text-sm text-blue-300/90">{report.resolutionNote}</p>
-                )}
-              </div>
-              <div className="shrink-0 text-left sm:text-right">
-                {report.lastPrice != null && (
-                  <p className="text-xl font-semibold tabular-nums text-slate-900 dark:text-white sm:text-2xl">
-                    {report.lastPrice.toLocaleString(undefined, {
-                      style: "currency",
-                      currency: report.currency || "USD",
-                    })}
-                  </p>
-                )}
-                <p className="font-mono text-xs text-slate-500 dark:text-zinc-500">
-                  as of {new Date(report.asOf).toLocaleString()}
-                </p>
-              </div>
+          {err && (
+            <div
+              className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+              role="alert"
+            >
+              {err}
             </div>
-          </div>
-
-          <StockPriceChart symbol={report.symbol} />
-
-          {report.warnings.length > 0 && (
-            <ul className="list-outside space-y-1.5 rounded-lg border border-amber-500/25 bg-amber-500/5 py-3 pl-6 pr-4 text-sm text-amber-100/90 sm:list-inside sm:space-y-0 sm:px-4 sm:pl-4">
-              {report.warnings.map((w) => (
-                <li key={w}>{w}</li>
-              ))}
-            </ul>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {report.metrics.map((m) => (
-              <article
-                key={m.id}
-                className="flex flex-col rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold text-slate-900 dark:text-white">{m.title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-zinc-500">
-                      {m.subtitle}
+          {report && report.symbol && (
+            <div className="space-y-6">
+              <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/95 dark:bg-zinc-900/40 p-4 sm:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+                  <div className="min-w-0">
+                    <h2 className="break-words text-xl font-semibold text-slate-900 dark:text-white sm:text-2xl">
+                      {report.name ?? report.symbol}
+                    </h2>
+                    <p className="mt-1 break-all font-mono text-xs text-slate-600 dark:text-zinc-400 sm:text-sm">
+                      {report.symbol}
+                      {report.exchange ? ` · ${report.exchange}` : ""}
+                      {report.currency ? ` · ${report.currency}` : ""}
+                    </p>
+                    {report.resolutionNote && (
+                      <p className="mt-2 break-words text-sm text-blue-300/90">{report.resolutionNote}</p>
+                    )}
+                  </div>
+                  <div className="shrink-0 text-left sm:text-right">
+                    {report.lastPrice != null && (
+                      <p className="text-xl font-semibold tabular-nums text-slate-900 dark:text-white sm:text-2xl">
+                        {report.lastPrice.toLocaleString(undefined, {
+                          style: "currency",
+                          currency: report.currency || "USD",
+                        })}
+                      </p>
+                    )}
+                    <p className="font-mono text-xs text-slate-500 dark:text-zinc-500">
+                      as of {new Date(report.asOf).toLocaleString()}
                     </p>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-md border px-2.5 py-1 font-mono text-sm font-medium ${gradeStyles[m.grade]}`}
-                  >
-                    {m.grade}
-                  </span>
                 </div>
-                <p
-                  className="mt-4 font-mono text-2xl font-medium tabular-nums text-slate-800 dark:text-zinc-100"
-                  style={{ fontFamily: "var(--font-plex-mono), ui-monospace" }}
-                >
-                  {m.value}
-                </p>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-zinc-400">{m.detail}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      )}
+              </div>
 
-      <footer className="mt-16 border-t border-slate-200 dark:border-zinc-800 pt-8 text-xs text-slate-600 dark:text-zinc-600">
-        <p>
-          Grades are heuristic summaries for education — not a recommendation.
-          Verify figures in filings. Fear &amp; Greed from CNN when reachable;
-          Finnhub and Yahoo Finance (chart + some 403 fallbacks) power prices and
-          fundamentals.
-        </p>
-      </footer>
+              <StockPriceChart symbol={report.symbol} />
+
+              {report.warnings.length > 0 && (
+                <ul className="list-outside space-y-1.5 rounded-lg border border-amber-500/25 bg-amber-500/5 py-3 pl-6 pr-4 text-sm text-amber-100/90 sm:list-inside sm:space-y-0 sm:px-4 sm:pl-4">
+                  {report.warnings.map((w) => (
+                    <li key={w}>{w}</li>
+                  ))}
+                </ul>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {report.metrics.map((m) => (
+                  <article
+                    key={m.id}
+                    className="flex flex-col rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-5 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-white">{m.title}</h3>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-zinc-500">
+                          {m.subtitle}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-md border px-2.5 py-1 font-mono text-sm font-medium ${gradeStyles[m.grade]}`}
+                      >
+                        {m.grade}
+                      </span>
+                    </div>
+                    <p
+                      className="mt-4 font-mono text-2xl font-medium tabular-nums text-slate-800 dark:text-zinc-100"
+                      style={{ fontFamily: "var(--font-plex-mono), ui-monospace" }}
+                    >
+                      {m.value}
+                    </p>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-zinc-400">{m.detail}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <footer className="mt-16 border-t border-slate-200 dark:border-zinc-800 pt-8 text-xs text-slate-600 dark:text-zinc-600">
+            <p>
+              Grades are heuristic summaries for education — not a recommendation.
+              Verify figures in filings. Fear &amp; Greed from CNN when reachable;
+              Finnhub and Yahoo Finance (chart + some 403 fallbacks) power prices and
+              fundamentals.
+            </p>
+          </footer>
+        </div>
+
+        {showWatchlistColumn && (
+          <aside
+            className="min-w-0 order-1 lg:order-2 lg:sticky lg:top-[calc(env(safe-area-inset-top)+4.5rem)] lg:z-0 lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto"
+            aria-label="Watchlists"
+          >
+            <WatchlistsPanel
+              addRequest={watchAddRequest}
+              tickerToAdd={watchTicker}
+              onSelectSymbol={onWatchlistSymbol}
+              selectedSymbol={report?.symbol ?? null}
+              className="mb-8 lg:mb-0"
+            />
+          </aside>
+        )}
+      </div>
     </main>
   );
 }
