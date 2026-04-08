@@ -133,10 +133,12 @@ export function AiAssistLauncher() {
         role="dialog"
         aria-modal="false"
         aria-labelledby={TITLE_ID}
-        className={`pointer-events-auto mb-3 w-[min(calc(100vw-2rem),17.5rem)] origin-bottom-right transition-[opacity,transform] duration-200 motion-reduce:transition-none ${
+        aria-hidden={open ? undefined : true}
+        /* Closed: parent `pointer-events: none` still lets descendants with default `auto` receive taps; force none on subtree so invisible LLM links do not steal touches. */
+        className={`mb-3 w-[min(calc(100vw-2rem),17.5rem)] origin-bottom-right transition-[opacity,transform] duration-200 motion-reduce:transition-none ${
           open
-            ? "scale-100 opacity-100"
-            : "pointer-events-none scale-95 opacity-0 motion-reduce:opacity-0"
+            ? "pointer-events-auto scale-100 opacity-100"
+            : "hidden pointer-events-none [&_*]:pointer-events-none"
         }`}
       >
         <div className="rounded-2xl border border-slate-200 dark:border-zinc-700 bg-[var(--card)] shadow-xl shadow-slate-900/10 dark:shadow-black/40 ring-1 ring-black/5 dark:ring-white/10">
