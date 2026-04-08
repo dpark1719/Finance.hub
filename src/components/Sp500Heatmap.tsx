@@ -280,7 +280,7 @@ export function Sp500Heatmap({
     return () => window.clearInterval(id);
   }, [load, heatmapRange]);
 
-  const renderNode = useCallback(
+  const treemapCellContent = useCallback(
     (props: unknown) => {
       const p = props as TreemapCellProps;
       return (
@@ -370,7 +370,7 @@ export function Sp500Heatmap({
               type="flat"
               stroke="transparent"
               isAnimationActive={false}
-              content={renderNode as never}
+              content={treemapCellContent as never}
             >
               <Tooltip
                 content={(props) => <HeatTooltip {...props} periodLabel={periodLabel} />}
