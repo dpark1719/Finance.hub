@@ -76,9 +76,11 @@ function formatPrice(a: FlowAsset): string {
 }
 
 function pctClass(v: number): string {
-  if (v > 0) return "bg-emerald-950/80 text-emerald-300 ring-emerald-800/60";
-  if (v < 0) return "bg-red-950/80 text-red-300 ring-red-800/60";
-  return "bg-slate-100 dark:bg-slate-200 dark:bg-zinc-800/80 text-slate-700 dark:text-zinc-300 ring-zinc-700/60";
+  if (v > 0)
+    return "bg-emerald-500/12 text-emerald-800 ring-emerald-600/25 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-400/30";
+  if (v < 0)
+    return "bg-red-500/12 text-red-800 ring-red-600/25 dark:bg-red-500/15 dark:text-red-300 dark:ring-red-400/30";
+  return "bg-slate-100 text-slate-700 ring-slate-300/70 dark:bg-zinc-800/80 dark:text-zinc-300 dark:ring-zinc-600/50";
 }
 
 function flowDirectionFor(a: FlowAsset): FlowDirection {
@@ -297,8 +299,8 @@ export default function FlowsPage() {
             onClick={() => setCategory(c)}
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
               category === c
-                ? "bg-zinc-100 text-zinc-900"
-                : "border border-slate-200 dark:border-zinc-800 bg-slate-50/95 dark:bg-zinc-900/40 text-slate-600 dark:text-zinc-400 hover:border-slate-300 dark:border-zinc-700 hover:text-slate-800 dark:text-zinc-200"
+                ? "bg-slate-200 text-slate-900 dark:bg-zinc-100 dark:text-zinc-900"
+                : "bg-slate-100 text-slate-700 dark:bg-zinc-800/80 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-800"
             }`}
           >
             {c}
@@ -401,8 +403,8 @@ export default function FlowsPage() {
                         onClick={() => setCompareSortKey(k)}
                         className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
                           compareSortKey === k
-                            ? "bg-zinc-100 text-zinc-900"
-                            : "text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:text-zinc-200"
+                            ? "bg-slate-200 text-slate-900 dark:bg-zinc-100 dark:text-zinc-900"
+                            : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 hover:text-slate-800 dark:hover:bg-zinc-800/50 dark:hover:text-zinc-200"
                         }`}
                       >
                         {k.toUpperCase()}
@@ -452,7 +454,7 @@ export default function FlowsPage() {
                       ).map(([label, { best, worst }]) => (
                         <div
                           key={label}
-                          className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/50 p-3"
+                          className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-800/40 p-3"
                         >
                           <div className="text-xs font-medium text-slate-500 dark:text-zinc-500">{label} Leader</div>
                           <div className="mt-1 flex items-center gap-1.5">
@@ -565,7 +567,7 @@ export default function FlowsPage() {
                       return (
                         <div
                           key={a.id}
-                          className="flows-tank-pulse flex flex-col rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/40 p-3"
+                          className="flows-tank-pulse flex flex-col rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-800/40 p-3"
                         >
                           <div className="text-center text-xs font-medium text-slate-700 dark:text-zinc-300">
                             {a.name}
@@ -633,7 +635,7 @@ export default function FlowsPage() {
                       return (
                         <div
                           key={a.id}
-                          className="flows-tank-pulse flex flex-col rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/40 p-3"
+                          className="flows-tank-pulse flex flex-col rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-800/40 p-3"
                         >
                           <div className="text-center text-xs font-medium text-slate-700 dark:text-zinc-300">
                             {a.name}
@@ -705,8 +707,8 @@ export default function FlowsPage() {
                     key={a.id}
                     className={`min-h-[72px] min-w-[100px] rounded-lg border px-3 py-2 ${
                       up
-                        ? "border-emerald-800/50 bg-emerald-950/70"
-                        : "border-red-900/50 bg-red-950/70"
+                        ? "border-emerald-500/35 bg-emerald-500/10 dark:border-emerald-400/25 dark:bg-emerald-500/12"
+                        : "border-red-500/35 bg-red-500/10 dark:border-red-400/25 dark:bg-red-500/12"
                     }`}
                     style={{ flex: `${w} 1 120px` }}
                   >
