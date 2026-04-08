@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Polymarket",
+  title: "Real-time probabilities",
   description:
-    "Top Polymarket markets by 24-hour volume with implied odds and traded notional (Gamma API).",
+    "Top prediction markets by 24-hour volume with live implied Yes/No probabilities (Polymarket Gamma API).",
 };
 
 export default function PolymarketLayout({

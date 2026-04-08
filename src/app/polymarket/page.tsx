@@ -26,6 +26,14 @@ function formatPct(p: number): string {
   return `${(p * 100).toFixed(1)}%`;
 }
 
+/** Yes = red block, No = green block; other labels stay neutral. */
+function outcomeLabelClass(name: string): "yes" | "no" | "neutral" {
+  const n = name.trim().toLowerCase();
+  if (n === "yes") return "yes";
+  if (n === "no") return "no";
+  return "neutral";
+}
+
 function OutcomesLine({ outcomes }: { outcomes: PolymarketTopMarket["outcomes"] }) {
   if (outcomes.length === 0) {
     return <span className="text-slate-500 dark:text-zinc-500">—</span>;
@@ -33,13 +41,22 @@ function OutcomesLine({ outcomes }: { outcomes: PolymarketTopMarket["outcomes"] 
   const show = outcomes.slice(0, 6);
   const more = outcomes.length - show.length;
   return (
-    <ul className="flex flex-col gap-1 text-sm text-slate-800 dark:text-zinc-200">
-      {show.map((o, i) => (
-        <li key={`${o.name}-${i}`} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-          <span className="font-medium text-slate-700 dark:text-zinc-300">{o.name}</span>
-          <span className="font-mono tabular-nums text-slate-900 dark:text-zinc-100">{formatPct(o.probability)}</span>
-        </li>
-      ))}
+    <ul className="flex flex-col gap-1.5 text-sm text-slate-800 dark:text-zinc-200">
+      {show.map((o, i) => {
+        const kind = outcomeLabelClass(o.name);
+        const labelStyles =
+          kind === "yes"
+            ? "rounded-md bg-red-600 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-sm dark:bg-red-600"
+            : kind === "no"
+              ? "rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-sm dark:bg-emerald-600"
+              : "rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-800 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200";
+        return (
+          <li key={`${o.name}-${i}`} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <span className={labelStyles}>{o.name}</span>
+            <span className="font-mono tabular-nums text-slate-900 dark:text-zinc-100">{formatPct(o.probability)}</span>
+          </li>
+        );
+      })}
       {more > 0 ? (
         <li className="text-xs text-slate-500 dark:text-zinc-500">+{more} more outcomes</li>
       ) : null}
@@ -86,19 +103,22 @@ export default function PolymarketPage() {
     <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-slate-200 dark:border-zinc-800 pb-8">
         <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
-          finance.hub · Polymarket
+          finance.hub · Real-time probabilities
         </p>
         <h1
           className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
           style={{ fontFamily: "var(--font-dm-sans), system-ui" }}
         >
-          Top volume markets
+          Top markets by 24h volume
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
           The ten most active Polymarket markets by <strong className="font-medium text-slate-800 dark:text-zinc-300">24h volume</strong>
-          (USDC). Prices are implied probabilities from the order book. Data comes from Polymarket&apos;s public Gamma API;
-          it may lag or omit markets. Prediction markets carry risk and may be restricted where you live — not investment or
-          gambling advice.
+          (USDC).           <span className="inline-flex items-center gap-1.5 align-middle">
+            <span className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">Yes</span>
+            <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">No</span>
+          </span>{" "}
+          outcomes use red and green labels; other outcomes use a neutral chip. Data from Polymarket&apos;s Gamma API and may
+          lag. Prediction markets carry risk and may be restricted where you live — not investment or gambling advice.
         </p>
         {fetchedAt && (
           <p className="mt-3 font-mono text-xs text-slate-500 dark:text-zinc-600">
@@ -118,7 +138,7 @@ export default function PolymarketPage() {
 
       {markets.length === 0 && !err && (
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/90 dark:bg-zinc-950/40 px-4 py-12 text-center text-sm text-slate-500 dark:text-zinc-500">
-          Loading Polymarket markets…
+          Loading markets…
         </div>
       )}
 
@@ -157,7 +177,7 @@ export default function PolymarketPage() {
                   </div>
                 </dl>
                 <div className="mt-3 border-t border-slate-200 pt-3 dark:border-zinc-800">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">Odds (implied)</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zinc-500">Implied probability</p>
                   <div className="mt-2">
                     <OutcomesLine outcomes={m.outcomes} />
                   </div>
@@ -173,7 +193,7 @@ export default function PolymarketPage() {
                 <tr className="border-b border-slate-200 bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900/50">
                   <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">#</th>
                   <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Market</th>
-                  <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Odds (implied %)</th>
+                  <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Implied % (Yes red · No green)</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">24h volume</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">All-time volume</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">Liquidity</th>

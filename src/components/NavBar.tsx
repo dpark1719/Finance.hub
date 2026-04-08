@@ -14,7 +14,7 @@ const links = [
   { href: "/savings", label: "Savings" },
   { href: "/credit-cards", label: "Cards" },
   { href: "/flows", label: "Flows" },
-  { href: "/polymarket", label: "Polymarket" },
+  { href: "/polymarket", label: "Real-time probabilities" },
   { href: "/calculators", label: "Calculators" },
 ];
 
