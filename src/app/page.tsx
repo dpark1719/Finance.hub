@@ -95,26 +95,14 @@ const icons = {
       strokeLinejoin="round"
       aria-hidden
     >
-      <ellipse cx="12" cy="12.5" rx="6.9" ry="6.1" />
-      <ellipse
-        cx="4.15"
-        cy="10.6"
-        rx="2.1"
-        ry="2.85"
-        transform="rotate(-28 4.15 10.6)"
-      />
-      <ellipse
-        cx="19.85"
-        cy="10.6"
-        rx="2.1"
-        ry="2.85"
-        transform="rotate(28 19.85 10.6)"
-      />
-      <circle cx="8.4" cy="10.3" r="0.95" />
-      <circle cx="15.6" cy="10.3" r="0.95" />
-      <ellipse cx="12" cy="15.9" rx="4.35" ry="2.45" />
-      <circle cx="10.15" cy="15.9" r="0.52" fill="currentColor" stroke="none" />
-      <circle cx="13.85" cy="15.9" r="0.52" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="12.8" r="6.2" />
+      <circle cx="6.5" cy="6.6" r="2.35" />
+      <circle cx="17.5" cy="6.6" r="2.35" />
+      <circle cx="9" cy="11.4" r="1" />
+      <circle cx="15" cy="11.4" r="1" />
+      <ellipse cx="12" cy="16.3" rx="3.9" ry="2.35" />
+      <circle cx="10.45" cy="16.3" r="0.5" fill="currentColor" stroke="none" />
+      <circle cx="13.55" cy="16.3" r="0.5" fill="currentColor" stroke="none" />
     </svg>
   ),
   card: (
