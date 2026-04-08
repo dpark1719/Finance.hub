@@ -85,9 +85,23 @@ const icons = {
     </svg>
   ),
   piggy: (
-    <span className="text-3xl leading-none" role="img" aria-hidden>
-      🐷
-    </span>
+    <svg
+      className="h-8 w-8"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M10 4h4" />
+      <path d="M7 20v-9a5 5 0 0 1 5-5h0a5 5 0 0 1 5 5v9" />
+      <path d="M7 11H4a1.5 1.5 0 0 0 0 3h3" />
+      <ellipse cx="3.25" cy="12.5" rx="1.25" ry="1.5" fill="none" stroke="currentColor" />
+      <path d="M9 20v-2M12 20v-2M15 20v-2" />
+      <circle cx="17" cy="12.5" r="1" fill="currentColor" />
+    </svg>
   ),
   card: (
     <svg
