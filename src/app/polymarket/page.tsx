@@ -336,18 +336,26 @@ export default function PolymarketPage() {
 
           {/* Desktop: table */}
           <div className="hidden overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 lg:block">
-            <table className="w-full min-w-[800px] table-fixed border-collapse text-left text-sm">
+            <table className="w-full min-w-[1080px] table-fixed border-collapse text-left text-sm">
               <caption className="sr-only">
                 Markets sorted by 24-hour volume. Yes is green and No is red; two-outcome markets may use team colors.
               </caption>
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-                  <th className="w-10 px-3 py-3 font-semibold text-slate-700 dark:text-zinc-300">#</th>
-                  <th className="w-[36%] min-w-0 px-3 py-3 font-semibold text-slate-700 dark:text-zinc-300">Market</th>
-                  <th className="w-[30%] min-w-0 px-3 py-3 font-semibold text-slate-700 dark:text-zinc-300">Implied %</th>
-                  <th className="w-[11%] px-3 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">24h vol</th>
-                  <th className="w-[11%] px-3 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">All-time</th>
-                  <th className="w-[11%] px-3 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">Liq</th>
+                  <th className="w-10 min-w-[2.5rem] px-2 py-3 text-center font-semibold text-slate-700 dark:text-zinc-300">
+                    #
+                  </th>
+                  <th className="min-w-0 w-[28%] px-3 py-3 font-semibold text-slate-700 dark:text-zinc-300">Market</th>
+                  <th className="min-w-0 w-[26%] px-3 py-3 font-semibold text-slate-700 dark:text-zinc-300">Implied %</th>
+                  <th className="min-w-[10.5rem] w-[14%] px-3 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">
+                    24h volume
+                  </th>
+                  <th className="min-w-[10.5rem] w-[14%] px-3 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">
+                    All-time vol
+                  </th>
+                  <th className="min-w-[10.5rem] w-[14%] px-3 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">
+                    Liquidity
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -356,29 +364,31 @@ export default function PolymarketPage() {
                     key={m.id}
                     className="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/80 dark:hover:bg-zinc-900/30"
                   >
-                    <td className="px-3 py-3 font-mono text-slate-500 dark:text-zinc-500">{idx + 1}</td>
-                    <td className="min-w-0 px-3 py-3 align-top">
+                    <td className="w-10 min-w-[2.5rem] px-2 py-3 text-center align-middle font-mono text-slate-500 dark:text-zinc-500">
+                      {idx + 1}
+                    </td>
+                    <td className="min-w-0 w-[28%] px-3 py-3 align-middle">
                       <a
                         href={m.polymarketUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="break-words font-medium text-blue-600 [overflow-wrap:anywhere] hover:underline dark:text-blue-400"
+                        className="inline-block break-words font-medium leading-snug text-blue-600 [overflow-wrap:anywhere] hover:underline dark:text-blue-400"
                       >
                         {m.question}
                       </a>
                     </td>
-                    <td className="min-w-0 px-3 py-3 align-top">
+                    <td className="min-w-0 w-[26%] px-3 py-3 align-top">
                       <div className="max-w-full">
                         <OutcomesLine outcomes={m.outcomes} />
                       </div>
                     </td>
-                    <td className="px-3 py-3 text-right font-mono text-xs tabular-nums text-slate-900 dark:text-zinc-100 sm:text-sm">
+                    <td className="min-w-[10.5rem] w-[14%] px-3 py-3 text-right align-middle font-mono text-sm tabular-nums tracking-tight text-slate-900 dark:text-zinc-100 whitespace-nowrap">
                       {formatUsd(m.volume24hr)}
                     </td>
-                    <td className="px-3 py-3 text-right font-mono text-xs tabular-nums text-slate-900 dark:text-zinc-100 sm:text-sm">
+                    <td className="min-w-[10.5rem] w-[14%] px-3 py-3 text-right align-middle font-mono text-sm tabular-nums tracking-tight text-slate-900 dark:text-zinc-100 whitespace-nowrap">
                       {formatUsd(m.volumeTotal)}
                     </td>
-                    <td className="px-3 py-3 text-right font-mono text-xs tabular-nums text-slate-900 dark:text-zinc-100 sm:text-sm">
+                    <td className="min-w-[10.5rem] w-[14%] px-3 py-3 text-right align-middle font-mono text-sm tabular-nums tracking-tight text-slate-900 dark:text-zinc-100 whitespace-nowrap">
                       {formatUsd(m.liquidity)}
                     </td>
                   </tr>
