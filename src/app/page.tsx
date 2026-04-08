@@ -95,14 +95,12 @@ const icons = {
       strokeLinejoin="round"
       aria-hidden
     >
-      <circle cx="12" cy="12.8" r="6.2" />
-      <circle cx="6.5" cy="6.6" r="2.35" />
-      <circle cx="17.5" cy="6.6" r="2.35" />
-      <circle cx="9" cy="11.4" r="1" />
-      <circle cx="15" cy="11.4" r="1" />
-      <ellipse cx="12" cy="16.3" rx="3.9" ry="2.35" />
-      <circle cx="10.45" cy="16.3" r="0.5" fill="currentColor" stroke="none" />
-      <circle cx="13.55" cy="16.3" r="0.5" fill="currentColor" stroke="none" />
+      <circle cx="6.5" cy="14.5" r="1.95" />
+      <rect x="7.85" y="10" width="9.5" height="11" rx="4.25" />
+      <path d="M10.35 10.65h3.3" />
+      <circle cx="14.35" cy="12.65" r="0.88" />
+      <path d="M8.25 21v1.4M15.75 21v1.4" />
+      <path d="M17.35 13.5q1.85 0 2.35 1.45t-0.55 2.15" />
     </svg>
   ),
   card: (
