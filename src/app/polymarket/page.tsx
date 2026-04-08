@@ -50,10 +50,14 @@ function OutcomesLine({ outcomes }: { outcomes: PolymarketTopMarket["outcomes"] 
             : kind === "no"
               ? "rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-sm dark:bg-emerald-600"
               : "rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-800 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200";
+        const labelClass =
+          kind === "neutral"
+            ? `${labelStyles} min-w-0 max-w-[min(100%,12rem)] truncate sm:max-w-[15rem]`
+            : labelStyles;
         return (
-          <li key={`${o.name}-${i}`} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-            <span className={labelStyles}>{o.name}</span>
-            <span className="font-mono tabular-nums text-slate-900 dark:text-zinc-100">{formatPct(o.probability)}</span>
+          <li key={`${o.name}-${i}`} className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <span className={labelClass}>{o.name}</span>
+            <span className="shrink-0 font-mono tabular-nums text-slate-900 dark:text-zinc-100">{formatPct(o.probability)}</span>
           </li>
         );
       })}
@@ -112,14 +116,22 @@ export default function PolymarketPage() {
           Top markets by 24h volume
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
-          The ten most active Polymarket markets by <strong className="font-medium text-slate-800 dark:text-zinc-300">24h volume</strong>
-          (USDC).           <span className="inline-flex items-center gap-1.5 align-middle">
-            <span className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">Yes</span>
-            <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white">No</span>
-          </span>{" "}
-          outcomes use red and green labels; other outcomes use a neutral chip. Data from Polymarket&apos;s Gamma API and may
-          lag. Prediction markets carry risk and may be restricted where you live — not investment or gambling advice.
+          The ten most active Polymarket markets by{" "}
+          <strong className="font-medium text-slate-800 dark:text-zinc-300">24h volume</strong> (USDC). Prices are implied
+          probabilities from the order book. Data from Polymarket&apos;s Gamma API may lag. Prediction markets carry risk and
+          may be restricted where you live — not investment or gambling advice.
         </p>
+        <div className="mt-3 flex max-w-2xl flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-600 dark:text-zinc-500">
+          <span className="font-medium text-slate-700 dark:text-zinc-400">Outcome labels</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="rounded-md bg-red-600 px-2 py-0.5 font-semibold uppercase tracking-wide text-white">Yes</span>
+            <span aria-hidden className="text-slate-400 dark:text-zinc-600">
+              ·
+            </span>
+            <span className="rounded-md bg-emerald-600 px-2 py-0.5 font-semibold uppercase tracking-wide text-white">No</span>
+          </span>
+          <span className="text-slate-500 dark:text-zinc-500">Other outcomes use a neutral chip.</span>
+        </div>
         {fetchedAt && (
           <p className="mt-3 font-mono text-xs text-slate-500 dark:text-zinc-600">
             Fetched {new Date(fetchedAt).toLocaleString()}
@@ -189,11 +201,14 @@ export default function PolymarketPage() {
           {/* Desktop: table */}
           <div className="hidden overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 sm:block">
             <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+              <caption className="sr-only">
+                Markets sorted by 24-hour volume. Yes outcomes show a red label, No outcomes a green label.
+              </caption>
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900/50">
                   <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">#</th>
                   <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Market</th>
-                  <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Implied % (Yes red · No green)</th>
+                  <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Implied %</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">24h volume</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">All-time volume</th>
                   <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">Liquidity</th>

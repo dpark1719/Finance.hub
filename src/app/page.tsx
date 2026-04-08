@@ -119,6 +119,22 @@ const icons = {
       <path d="M16 7h6v6" />
     </svg>
   ),
+  probability: (
+    <svg
+      className="h-8 w-8"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2v20" />
+      <path d="M2 12h20" />
+    </svg>
+  ),
   calculator: (
     <svg
       className="h-8 w-8"
@@ -179,6 +195,12 @@ const sections: Section[] = [
     title: "Capital Flows",
     description: "Track money flowing into gold, oil, crypto, and more",
     icon: icons.trending,
+  },
+  {
+    href: "/polymarket",
+    title: "Real-time probabilities",
+    description: "Top Polymarket markets by volume with live Yes/No implied odds",
+    icon: icons.probability,
   },
   {
     href: "/calculators",

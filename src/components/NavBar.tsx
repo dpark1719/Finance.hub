@@ -31,22 +31,22 @@ export function NavBar() {
       className="sticky top-0 z-50 border-b border-slate-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/80 pt-[env(safe-area-inset-top,0px)] backdrop-blur-md"
       aria-label="Main navigation"
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+      <div className="mx-auto flex max-w-7xl items-start justify-between gap-3 px-4 py-3 sm:items-center sm:px-6">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <Link
             href="/"
-            className="mr-4 shrink-0 text-sm font-semibold tracking-tight text-slate-900 dark:text-white"
+            className="shrink-0 text-sm font-semibold tracking-tight text-slate-900 dark:text-white sm:mr-1"
           >
             finance.hub
           </Link>
-          <div className="hidden items-center gap-0.5 sm:flex">
+          <div className="hidden min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-1.5 sm:flex">
             {links.map((l) => {
               const active = path === l.href;
               return (
                 <Link
                   key={l.href}
                   href={l.href}
-                  className={`rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
+                  className={`whitespace-nowrap rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
                     active
                       ? "bg-slate-200 dark:bg-zinc-800 text-slate-900 dark:text-white"
                       : "text-slate-600 dark:text-zinc-400 hover:bg-slate-200/80 dark:hover:bg-zinc-800/50 hover:text-slate-800 dark:hover:text-zinc-200"
