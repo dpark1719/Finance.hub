@@ -1,5 +1,6 @@
 "use client";
 
+import { barColorForOutcome, OUTCOME_NO_RED, OUTCOME_YES_GREEN } from "@/lib/entity-colors";
 import type { PolymarketTopMarket } from "@/lib/polymarket-top";
 import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
@@ -32,18 +33,12 @@ function clampPct(p: number): number {
   return Math.min(100, Math.max(0, p * 100));
 }
 
-/** Yes = red fill, No = green fill; neutral uses slate. */
+/** Yes = green, No = red; anything else uses team/entity lookup or a fallback hue. */
 function outcomeKind(name: string): "yes" | "no" | "neutral" {
   const n = name.trim().toLowerCase();
   if (n === "yes") return "yes";
   if (n === "no") return "no";
   return "neutral";
-}
-
-function barFillClass(kind: "yes" | "no" | "neutral"): string {
-  if (kind === "yes") return "bg-red-600 dark:bg-red-600";
-  if (kind === "no") return "bg-emerald-600 dark:bg-emerald-600";
-  return "bg-slate-500 dark:bg-zinc-500";
 }
 
 function isYesNoBinary(outcomes: PolymarketTopMarket["outcomes"]): boolean {
@@ -52,7 +47,7 @@ function isYesNoBinary(outcomes: PolymarketTopMarket["outcomes"]): boolean {
   return set.has("yes") && set.has("no");
 }
 
-/** Single row: red | green widths = Yes% / No%. */
+/** Yes = green (left), No = red (right); labels always below the bar. */
 function YesNoSplitBar({
   yesProb,
   noProb,
@@ -65,57 +60,86 @@ function YesNoSplitBar({
   const sum = rawYes + rawNo;
   const yesW = sum > 0 ? (rawYes / sum) * 100 : 50;
   const noW = sum > 0 ? (rawNo / sum) * 100 : 50;
-  const showInlineYes = yesW >= 18;
-  const showInlineNo = noW >= 18;
 
   const thinMin = (w: number): Pick<CSSProperties, "minWidth"> =>
     w > 0 && w < 8 ? { minWidth: "6px" } : {};
 
-  const yesStyle: CSSProperties = { width: `${yesW}%`, ...thinMin(yesW) };
-  const noStyle: CSSProperties = { width: `${noW}%`, ...thinMin(noW) };
+  const yesStyle: CSSProperties = {
+    width: `${yesW}%`,
+    backgroundColor: OUTCOME_YES_GREEN,
+    ...thinMin(yesW),
+  };
+  const noStyle: CSSProperties = {
+    width: `${noW}%`,
+    backgroundColor: OUTCOME_NO_RED,
+    ...thinMin(noW),
+  };
 
   return (
-    <div className="w-full space-y-1">
+    <div className="w-full space-y-1.5">
       <div
         className="flex h-9 w-full min-w-0 overflow-hidden rounded-lg border border-slate-200 shadow-sm dark:border-zinc-700"
         role="img"
         aria-label={`Yes ${formatPct(yesProb)}, No ${formatPct(noProb)}`}
       >
-        <div
-          className="flex min-w-0 items-center justify-center bg-red-600 text-white transition-[width] duration-300"
-          style={yesStyle}
-        >
-          {showInlineYes ? (
-            <span className="truncate px-1 text-center text-[10px] font-bold uppercase tracking-wide">Yes {formatPct(yesProb)}</span>
-          ) : null}
-        </div>
-        <div
-          className="flex min-w-0 items-center justify-center bg-emerald-600 text-white transition-[width] duration-300"
-          style={noStyle}
-        >
-          {showInlineNo ? (
-            <span className="truncate px-1 text-center text-[10px] font-bold uppercase tracking-wide">No {formatPct(noProb)}</span>
-          ) : null}
-        </div>
+        <div className="h-full min-w-0 transition-[width] duration-300" style={yesStyle} />
+        <div className="h-full min-w-0 transition-[width] duration-300" style={noStyle} />
       </div>
-      {(!showInlineYes || !showInlineNo) && (
-        <div className="flex justify-between gap-2 text-[11px] tabular-nums text-slate-600 dark:text-zinc-400">
-          {!showInlineYes ? (
-            <span>
-              <span className="font-semibold text-red-600 dark:text-red-400">Yes</span> {formatPct(yesProb)}
-            </span>
-          ) : (
-            <span />
-          )}
-          {!showInlineNo ? (
-            <span className="text-right">
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">No</span> {formatPct(noProb)}
-            </span>
-          ) : (
-            <span />
-          )}
-        </div>
-      )}
+      <div className="flex justify-between gap-3 text-[11px] tabular-nums text-slate-700 dark:text-zinc-300">
+        <span className="min-w-0 text-left">
+          <span className="font-semibold text-emerald-600 dark:text-emerald-400">Yes</span> {formatPct(yesProb)}
+        </span>
+        <span className="min-w-0 text-right">
+          <span className="font-semibold text-red-600 dark:text-red-400">No</span> {formatPct(noProb)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+type OutcomeRow = PolymarketTopMarket["outcomes"][number];
+
+/** Two-outcome market (not Yes/No): team / entity colors, labels under left & right. */
+function BinarySplitBar({ left, right }: { left: OutcomeRow; right: OutcomeRow }) {
+  const rawL = clampPct(left.probability);
+  const rawR = clampPct(right.probability);
+  const sum = rawL + rawR;
+  const wL = sum > 0 ? (rawL / sum) * 100 : 50;
+  const wR = sum > 0 ? (rawR / sum) * 100 : 50;
+
+  const thinMin = (w: number): Pick<CSSProperties, "minWidth"> =>
+    w > 0 && w < 8 ? { minWidth: "6px" } : {};
+
+  const colorL = barColorForOutcome(left.name, "neutral", 0);
+  const colorR = barColorForOutcome(right.name, "neutral", 1);
+
+  const styleL: CSSProperties = { width: `${wL}%`, backgroundColor: colorL, ...thinMin(wL) };
+  const styleR: CSSProperties = { width: `${wR}%`, backgroundColor: colorR, ...thinMin(wR) };
+
+  return (
+    <div className="w-full space-y-1.5">
+      <div
+        className="flex h-9 w-full min-w-0 overflow-hidden rounded-lg border border-slate-200 shadow-sm dark:border-zinc-700"
+        role="img"
+        aria-label={`${left.name} ${formatPct(left.probability)}, ${right.name} ${formatPct(right.probability)}`}
+      >
+        <div className="h-full min-w-0 transition-[width] duration-300" style={styleL} title={left.name} />
+        <div className="h-full min-w-0 transition-[width] duration-300" style={styleR} title={right.name} />
+      </div>
+      <div className="flex justify-between gap-3 text-[11px] leading-snug text-slate-700 dark:text-zinc-300">
+        <span className="min-w-0 max-w-[48%] text-left">
+          <span className="font-semibold" style={{ color: colorL }}>
+            {left.name}
+          </span>{" "}
+          <span className="tabular-nums">{formatPct(left.probability)}</span>
+        </span>
+        <span className="min-w-0 max-w-[48%] text-right">
+          <span className="font-semibold" style={{ color: colorR }}>
+            {right.name}
+          </span>{" "}
+          <span className="tabular-nums">{formatPct(right.probability)}</span>
+        </span>
+      </div>
     </div>
   );
 }
@@ -140,21 +164,31 @@ function OutcomesLine({ outcomes }: { outcomes: PolymarketTopMarket["outcomes"] 
     );
   }
 
+  if (show.length === 2) {
+    return (
+      <div className="min-w-[10rem] space-y-1">
+        <BinarySplitBar left={show[0]} right={show[1]} />
+        {more > 0 ? <p className="text-xs text-slate-500 dark:text-zinc-500">+{more} more outcomes</p> : null}
+      </div>
+    );
+  }
+
   return (
     <ul className="flex min-w-[10rem] flex-col gap-2 text-sm text-slate-800 dark:text-zinc-200">
       {show.map((o, i) => {
         const kind = outcomeKind(o.name);
         const pct = clampPct(o.probability);
-        const fill = barFillClass(kind);
+        const fill = barColorForOutcome(o.name, kind, i);
         return (
           <li key={`${o.name}-${i}`} className="min-w-0 space-y-0.5">
             <div className="flex items-center gap-2">
               <span className="w-14 shrink-0 truncate text-xs font-semibold text-slate-700 dark:text-zinc-300">{o.name}</span>
               <div className="h-6 min-h-6 min-w-0 flex-1 overflow-hidden rounded-md bg-slate-200/90 dark:bg-zinc-800">
                 <div
-                  className={`h-full min-w-0 rounded-sm ${fill} transition-[width] duration-300`}
+                  className="h-full min-w-0 rounded-sm transition-[width] duration-300"
                   style={{
                     width: `${pct}%`,
+                    backgroundColor: fill,
                     ...(pct > 0 && pct < 6 ? { minWidth: "4px" } : {}),
                   }}
                 />
@@ -227,10 +261,11 @@ export default function PolymarketPage() {
           may be restricted where you live — not investment or gambling advice.
         </p>
         <div className="mt-3 max-w-2xl text-xs leading-relaxed text-slate-600 dark:text-zinc-500">
-          <span className="font-medium text-slate-700 dark:text-zinc-400">Bars are proportional to implied probability</span>
-          : <span className="text-red-600 dark:text-red-400">Yes</span> in red,{" "}
-          <span className="text-emerald-600 dark:text-emerald-400">No</span> in green; other outcomes use gray fills. Yes/No
-          markets use a single split bar.
+          <span className="font-medium text-slate-700 dark:text-zinc-400">Bar width = implied probability</span>.{" "}
+          <span className="text-emerald-600 dark:text-emerald-400">Yes</span> is green (left) and{" "}
+          <span className="text-red-600 dark:text-red-400">No</span> is red (right), with labels under the bar. Two-sided
+          sports matchups use representative team colors when we recognize the name; otherwise colors are assigned for
+          contrast.
         </div>
         {fetchedAt && (
           <p className="mt-3 font-mono text-xs text-slate-500 dark:text-zinc-600">
@@ -302,7 +337,7 @@ export default function PolymarketPage() {
           <div className="hidden overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 sm:block">
             <table className="w-full min-w-[640px] border-collapse text-left text-sm">
               <caption className="sr-only">
-                Markets sorted by 24-hour volume. Yes outcomes show a red label, No outcomes a green label.
+                Markets sorted by 24-hour volume. Yes is green and No is red; two-outcome markets may use team colors.
               </caption>
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900/50">
