@@ -25,7 +25,9 @@ export async function GET(request: Request) {
     const data = await getCachedHeatmap(range);
     return NextResponse.json(data, {
       headers: {
-        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+        // Do not cache the JSON by URL at the edge/browser: `range` is in the query string and
+        // mistaken caching can serve the wrong period. Server-side `unstable_cache` still limits Yahoo load.
+        "Cache-Control": "private, no-store",
       },
     });
   } catch (e) {

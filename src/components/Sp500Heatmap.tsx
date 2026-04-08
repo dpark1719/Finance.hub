@@ -247,13 +247,16 @@ export function Sp500Heatmap({
   const [refreshAfter, setRefreshAfter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** Bumps after each successful load so Recharts Treemap remounts with new `changePct` values. */
+  const [treemapEpoch, setTreemapEpoch] = useState(0);
   /** Ignore late responses when the user switches period before the prior fetch finishes. */
   const loadSeq = useRef(0);
 
-  const load = useCallback(async (range: HeatmapRangeKey) => {
+  const load = useCallback(async (range: HeatmapRangeKey, clearTreeForNewPeriod: boolean) => {
     const seq = ++loadSeq.current;
     setLoading(true);
     setError(null);
+    if (clearTreeForNewPeriod) setTree([]);
     try {
       const res = await fetch(
         `/api/sp500-heatmap?range=${encodeURIComponent(range)}`,
@@ -266,10 +269,18 @@ export function Sp500Heatmap({
         setTree([]);
         return;
       }
-      setTree(Array.isArray(data.tree) ? data.tree : []);
+      const bodyRange = data.range;
+      if (bodyRange !== range) {
+        setError("Heatmap response did not match the selected period. Try again.");
+        setTree([]);
+        return;
+      }
+      const nextTree = Array.isArray(data.tree) ? data.tree : [];
+      setTree(nextTree);
       setGeneratedAt(typeof data.generatedAt === "string" ? data.generatedAt : null);
       setRefreshAfter(typeof data.refreshAfter === "string" ? data.refreshAfter : null);
       setPeriodLabel(typeof data.periodLabel === "string" ? data.periodLabel : "1 day");
+      if (nextTree.length > 0) setTreemapEpoch((e) => e + 1);
     } catch {
       if (seq !== loadSeq.current) return;
       setError("Network error");
@@ -280,11 +291,11 @@ export function Sp500Heatmap({
   }, []);
 
   useEffect(() => {
-    void load(heatmapRange);
+    void load(heatmapRange, true);
   }, [load, heatmapRange]);
 
   useEffect(() => {
-    const id = window.setInterval(() => void load(heatmapRange), 3600_000);
+    const id = window.setInterval(() => void load(heatmapRange, false), 3600_000);
     return () => window.clearInterval(id);
   }, [load, heatmapRange]);
 
@@ -373,7 +384,7 @@ export function Sp500Heatmap({
         >
           <ResponsiveContainer width="100%" height="100%">
             <Treemap
-              key={heatmapRange}
+              key={`${heatmapRange}-${treemapEpoch}`}
               data={tree as never}
               dataKey="size"
               type="flat"
