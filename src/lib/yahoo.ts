@@ -246,6 +246,107 @@ function fetchYahooQuotesV7Sync(yahooSymbols: string[]): YahooV7QuoteRow[] {
   return results.map((row) => mapYahooV7Row(row));
 }
 
+type YahooSparkJson = {
+  spark?: {
+    result?: Array<{
+      symbol?: string;
+      close?: unknown[];
+      timestamp?: unknown[];
+      response?: Array<Record<string, unknown>>;
+    }>;
+  };
+};
+
+function sparkClosesFromResultItem(item: Record<string, unknown>): number[] {
+  const flatClose = item.close;
+  if (Array.isArray(flatClose)) {
+    return flatClose.filter((x): x is number => typeof x === "number" && Number.isFinite(x));
+  }
+  const responses = item.response;
+  if (!Array.isArray(responses) || responses.length === 0) return [];
+  const r0 = responses[0];
+  if (!r0 || typeof r0 !== "object") return [];
+  const ind = r0.indicators as Record<string, unknown> | undefined;
+  const quoteArr = ind?.quote as unknown[] | undefined;
+  const q0 = quoteArr?.[0] as Record<string, unknown> | undefined;
+  const closes = q0?.close;
+  if (Array.isArray(closes)) {
+    return closes.filter((x): x is number => typeof x === "number" && Number.isFinite(x));
+  }
+  return [];
+}
+
+function pctChangeFirstLast(closes: number[]): number | null {
+  if (closes.length < 2) return null;
+  const first = closes[0];
+  const last = closes[closes.length - 1];
+  if (first === 0 || !Number.isFinite(first) || !Number.isFinite(last)) return null;
+  return (last / first - 1) * 100;
+}
+
+/**
+ * Yahoo `v7/finance/spark` — batch period return % from first→last close in the series.
+ * Uses curl (same transport as quotes). Keys are Finnhub-style symbols.
+ */
+function fetchYahooSparkChunkSync(
+  yahooSymbols: string[],
+  range: string,
+  interval: string,
+): Map<string, number | null> {
+  const byFh = new Map<string, number | null>();
+  if (yahooSymbols.length === 0) return byFh;
+  const symList = yahooSymbols.join(",");
+  const url = `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${encodeURIComponent(symList)}&range=${encodeURIComponent(range)}&interval=${encodeURIComponent(interval)}`;
+  const res = curlGet(url);
+  if (res.status !== 200) {
+    throw new Error(`Yahoo spark HTTP ${res.status}`);
+  }
+  let json: YahooSparkJson;
+  try {
+    json = JSON.parse(res.body) as YahooSparkJson;
+  } catch {
+    throw new Error("Yahoo spark: invalid JSON");
+  }
+  const results = json.spark?.result ?? [];
+  const seenFh = new Set<string>();
+  for (const item of results) {
+    if (!item || typeof item !== "object") continue;
+    const rec = item as Record<string, unknown>;
+    const ySym = String(rec.symbol ?? "").trim();
+    if (!ySym) continue;
+    const fh = yahooTickerToFinnhub(ySym);
+    const closes = sparkClosesFromResultItem(rec);
+    byFh.set(fh, pctChangeFirstLast(closes));
+    seenFh.add(fh);
+  }
+  for (const y of yahooSymbols) {
+    const fh = yahooTickerToFinnhub(y);
+    if (!seenFh.has(fh)) byFh.set(fh, null);
+  }
+  return byFh;
+}
+
+export async function fetchYahooSparkPeriodChangePercents(
+  finnhubSymbols: readonly string[],
+  range: string,
+  interval: string,
+  batchSize = 32,
+  pauseMs = 400,
+): Promise<Map<string, number | null>> {
+  const merged = new Map<string, number | null>();
+  const yahooList = finnhubSymbols.map((s) => toYahooSymbol(s));
+  for (let i = 0; i < yahooList.length; i += batchSize) {
+    const chunkYahoo = yahooList.slice(i, i + batchSize);
+    const chunkFh = finnhubSymbols.slice(i, i + batchSize);
+    const part = fetchYahooSparkChunkSync(chunkYahoo, range, interval);
+    for (const fh of chunkFh) {
+      merged.set(fh, part.get(fh) ?? null);
+    }
+    if (i + batchSize < yahooList.length && pauseMs > 0) await sleep(pauseMs);
+  }
+  return merged;
+}
+
 /**
  * Batched Yahoo quotes for many tickers (Finnhub-style symbols → Yahoo internally).
  * Uses cookie+crumb; spaces requests slightly to reduce 429s.

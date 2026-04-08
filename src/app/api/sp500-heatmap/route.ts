@@ -1,21 +1,26 @@
 import { unstable_cache } from "next/cache";
 import { buildSp500HeatmapPayload } from "@/lib/sp500-heatmap-build";
+import type { HeatmapRangeKey } from "@/lib/yahoo-chart-presets";
+import { isHeatmapRangeKey } from "@/lib/yahoo-chart-presets";
 import { NextResponse } from "next/server";
 
-/** Cold cache builds ~500 tickers in Yahoo batches; allow headroom on serverless. */
+/** Cold cache builds ~500 tickers in Yahoo batches + spark series per period; allow headroom on serverless. */
 export const maxDuration = 60;
-
-const getCachedHeatmap = unstable_cache(
-  () => buildSp500HeatmapPayload(),
-  ["sp500-heatmap-data-v2-company"],
-  { revalidate: 3600 },
-);
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const data = await getCachedHeatmap();
+    const rangeParam = new URL(request.url).searchParams.get("range");
+    const range: HeatmapRangeKey =
+      rangeParam && isHeatmapRangeKey(rangeParam) ? rangeParam : "1d";
+
+    const getCached = unstable_cache(
+      () => buildSp500HeatmapPayload(range),
+      ["sp500-heatmap-v4", range],
+      { revalidate: 3600 },
+    );
+    const data = await getCached();
     return NextResponse.json(data, {
       headers: {
         "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",

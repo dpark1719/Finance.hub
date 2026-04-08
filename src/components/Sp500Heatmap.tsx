@@ -1,5 +1,7 @@
 "use client";
 
+import type { HeatmapRangeKey } from "@/lib/yahoo-chart-presets";
+import { HEATMAP_RANGE_OPTIONS } from "@/lib/yahoo-chart-presets";
 import { useCallback, useEffect, useState } from "react";
 import {
   ResponsiveContainer,
@@ -59,7 +61,11 @@ function fmtPx(n: number | null): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 });
 }
 
-function HeatTooltip({ active, payload }: TooltipProps<number, string>) {
+function HeatTooltip({
+  active,
+  payload,
+  periodLabel = "1 day",
+}: TooltipProps<number, string> & { periodLabel?: string }) {
   if (!active || !payload?.length) return null;
   const raw = payload[0]?.payload as Payload | undefined;
   const isStockTile = Boolean(raw?.searchSymbol);
@@ -93,7 +99,9 @@ function HeatTooltip({ active, payload }: TooltipProps<number, string>) {
         {" · "}
         <span className="text-slate-500 dark:text-zinc-500">C</span> {fmtPx(raw.c ?? null)}
       </p>
-      <p className="mt-1.5 font-mono tabular-nums text-slate-800 dark:text-zinc-200">Day {chStr}</p>
+      <p className="mt-1.5 font-mono tabular-nums text-slate-800 dark:text-zinc-200">
+        {periodLabel} {chStr}
+      </p>
     </div>
   );
 }
@@ -232,17 +240,19 @@ export function Sp500Heatmap({
 }: {
   onSelectSymbol: (finnhubSymbol: string) => void;
 }) {
+  const [heatmapRange, setHeatmapRange] = useState<HeatmapRangeKey>("1d");
+  const [periodLabel, setPeriodLabel] = useState("1 day");
   const [tree, setTree] = useState<Branch[]>([]);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
   const [refreshAfter, setRefreshAfter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (range: HeatmapRangeKey) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/sp500-heatmap");
+      const res = await fetch(`/api/sp500-heatmap?range=${encodeURIComponent(range)}`);
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(typeof data.error === "string" ? data.error : "Could not load heatmap");
@@ -252,6 +262,7 @@ export function Sp500Heatmap({
       setTree(Array.isArray(data.tree) ? data.tree : []);
       setGeneratedAt(typeof data.generatedAt === "string" ? data.generatedAt : null);
       setRefreshAfter(typeof data.refreshAfter === "string" ? data.refreshAfter : null);
+      setPeriodLabel(typeof data.periodLabel === "string" ? data.periodLabel : "1 day");
     } catch {
       setError("Network error");
       setTree([]);
@@ -261,13 +272,13 @@ export function Sp500Heatmap({
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load(heatmapRange);
+  }, [load, heatmapRange]);
 
   useEffect(() => {
-    const id = window.setInterval(() => void load(), 3600_000);
+    const id = window.setInterval(() => void load(heatmapRange), 3600_000);
     return () => window.clearInterval(id);
-  }, [load]);
+  }, [load, heatmapRange]);
 
   const renderNode = useCallback(
     (props: unknown) => {
@@ -290,7 +301,8 @@ export function Sp500Heatmap({
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">S&amp;P 500 heatmap</h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-500">
-            Block size ≈ market cap (Yahoo). Color = day change %. Hover a stock for OHLC;
+            Block size ≈ market cap (Yahoo). Color = return over the selected period (1 day uses
+            regular session change; longer ranges use Yahoo spark first→last close). Hover for OHLC;
             click to run the report. Data refreshes about every hour.
           </p>
         </div>
@@ -304,6 +316,25 @@ export function Sp500Heatmap({
             )}
           </p>
         )}
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Heatmap time period">
+        {HEATMAP_RANGE_OPTIONS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={heatmapRange === key}
+            onClick={() => setHeatmapRange(key)}
+            className={`touch-manipulation rounded-lg px-3 py-2 text-xs font-medium transition sm:text-sm ${
+              heatmapRange === key
+                ? "bg-blue-600 text-white"
+                : "border border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:border-slate-400 dark:hover:border-zinc-500"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {error && (
@@ -341,14 +372,17 @@ export function Sp500Heatmap({
               isAnimationActive={false}
               content={renderNode as never}
             >
-              <Tooltip content={<HeatTooltip />} />
+              <Tooltip
+                content={(props) => <HeatTooltip {...props} periodLabel={periodLabel} />}
+              />
             </Treemap>
           </ResponsiveContainer>
         </div>
       )}
 
       <p className="mt-3 text-center text-[11px] text-slate-600 dark:text-zinc-600">
-        Red = down · green = up · gray = missing change. Yahoo Finance via server batch quotes.
+        Red = down · green = up · gray = missing data. Yahoo Finance (quotes + spark for multi-day
+        ranges).
       </p>
     </section>
   );

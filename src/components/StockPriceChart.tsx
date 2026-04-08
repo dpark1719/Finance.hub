@@ -18,6 +18,7 @@ const RANGE_ORDER: YahooChartRangeKey[] = [
   "1w",
   "1m",
   "3m",
+  "ytd",
   "1y",
   "5y",
   "max",

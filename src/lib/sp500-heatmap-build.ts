@@ -1,8 +1,26 @@
 import { SP500_GICS, SP500_TICKERS } from "@/lib/sp500-lookup.generated";
+import type { HeatmapRangeKey } from "@/lib/yahoo-chart-presets";
+import { HEATMAP_RANGE_OPTIONS } from "@/lib/yahoo-chart-presets";
 import {
   fetchYahooQuotesForFinnhubSymbols,
+  fetchYahooSparkPeriodChangePercents,
   type YahooV7QuoteRow,
 } from "@/lib/yahoo";
+
+/** Yahoo spark `range` / `interval` for heatmap period returns (not used for 1 day). */
+const HEATMAP_SPARK_QUERY: Record<Exclude<HeatmapRangeKey, "1d">, { range: string; interval: string }> = {
+  "1w": { range: "5d", interval: "1d" },
+  "1m": { range: "1mo", interval: "1d" },
+  "3m": { range: "3mo", interval: "1d" },
+  ytd: { range: "ytd", interval: "1d" },
+  "1y": { range: "1y", interval: "1d" },
+  "5y": { range: "5y", interval: "1wk" },
+  max: { range: "max", interval: "1mo" },
+};
+
+function heatmapPeriodLabel(range: HeatmapRangeKey): string {
+  return HEATMAP_RANGE_OPTIONS.find((o) => o.key === range)?.label ?? range;
+}
 
 export type Sp500HeatmapLeafJSON = {
   name: string;
@@ -31,13 +49,17 @@ function leafSize(q: YahooV7QuoteRow | undefined): number {
   return 500_000;
 }
 
-function leafFromTicker(ticker: string, q: YahooV7QuoteRow | undefined): Sp500HeatmapLeafJSON {
+function leafFromTicker(
+  ticker: string,
+  q: YahooV7QuoteRow | undefined,
+  changePct: number | null,
+): Sp500HeatmapLeafJSON {
   const companyName = q?.companyName?.trim() || undefined;
   return {
     name: ticker,
     ...(companyName ? { companyName } : {}),
     size: leafSize(q),
-    changePct: q?.changePct ?? null,
+    changePct,
     o: q?.o ?? null,
     h: q?.h ?? null,
     l: q?.l ?? null,
@@ -47,19 +69,33 @@ function leafFromTicker(ticker: string, q: YahooV7QuoteRow | undefined): Sp500He
   };
 }
 
-export async function buildSp500HeatmapPayload(): Promise<{
+export async function buildSp500HeatmapPayload(
+  range: HeatmapRangeKey = "1d",
+): Promise<{
   generatedAt: string;
   /** ISO time — client may show “next refresh ~ …” */
   refreshAfter: string;
+  range: HeatmapRangeKey;
+  periodLabel: string;
   tree: Sp500HeatmapBranchJSON[];
 }> {
   const quoteMap = await fetchYahooQuotesForFinnhubSymbols(SP500_TICKERS);
+  let sparkMap: Map<string, number | null> | null = null;
+  if (range !== "1d") {
+    const sq = HEATMAP_SPARK_QUERY[range];
+    sparkMap = await fetchYahooSparkPeriodChangePercents(SP500_TICKERS, sq.range, sq.interval);
+  }
+
   const sectorMap = new Map<string, Map<string, Sp500HeatmapLeafJSON[]>>();
 
   for (const ticker of SP500_TICKERS) {
     const g = SP500_GICS[ticker] ?? { sector: "Unknown", industry: "Unknown" };
     const q = quoteMap.get(ticker);
-    const leaf = leafFromTicker(ticker, q);
+    const changePct =
+      range === "1d"
+        ? (q?.changePct ?? null)
+        : (sparkMap?.get(ticker) ?? null);
+    const leaf = leafFromTicker(ticker, q, changePct);
     if (!sectorMap.has(g.sector)) sectorMap.set(g.sector, new Map());
     const indMap = sectorMap.get(g.sector)!;
     if (!indMap.has(g.industry)) indMap.set(g.industry, []);
@@ -81,6 +117,7 @@ export async function buildSp500HeatmapPayload(): Promise<{
 
   const generatedAt = new Date().toISOString();
   const refreshAfter = new Date(Date.now() + 3600_000).toISOString();
+  const periodLabel = heatmapPeriodLabel(range);
 
-  return { generatedAt, refreshAfter, tree };
+  return { generatedAt, refreshAfter, range, periodLabel, tree };
 }
