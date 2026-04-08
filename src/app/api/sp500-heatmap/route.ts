@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 /** Pass `range` as an argument so the cache key includes the period (do not rely on closure + empty `()`). */
 const getCachedHeatmap = unstable_cache(
   async (range: HeatmapRangeKey) => buildSp500HeatmapPayload(range),
-  ["sp500-heatmap-v6"],
+  ["sp500-heatmap-v7-performance-size"],
   { revalidate: 3600 },
 );
 

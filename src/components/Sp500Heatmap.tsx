@@ -320,7 +320,8 @@ export function Sp500Heatmap({
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">S&amp;P 500 heatmap</h2>
           <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-500">
-            Block size ≈ market cap (Yahoo). Color = return over the selected period (1 day uses
+            Tile area blends market cap with how large the move was for the selected period (bigger
+            movers get more space; missing data shrinks). Color = sign of that return (1 day uses
             regular session change; longer ranges use Yahoo spark first→last close). Hover for OHLC;
             click to run the report. Data refreshes about every hour.
           </p>
@@ -403,8 +404,8 @@ export function Sp500Heatmap({
       )}
 
       <p className="mt-3 text-center text-[11px] text-slate-600 dark:text-zinc-600">
-        Red = down · green = up · gray = missing data. Yahoo Finance (quotes + spark for multi-day
-        ranges).
+        Red = down · green = up · gray = missing data · larger tiles = larger |return| vs market cap
+        for this period. Yahoo Finance (quotes + spark for multi-day ranges).
       </p>
     </section>
   );

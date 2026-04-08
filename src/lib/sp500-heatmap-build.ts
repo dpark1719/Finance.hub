@@ -26,6 +26,7 @@ export type Sp500HeatmapLeafJSON = {
   name: string;
   /** Full / long company name for tooltips (Yahoo); may be missing if quote failed. */
   companyName?: string;
+  /** Treemap weight: market cap scaled by √|period return| (not raw cap). */
   size: number;
   changePct: number | null;
   o: number | null;
@@ -49,6 +50,21 @@ function leafSize(q: YahooV7QuoteRow | undefined): number {
   return 500_000;
 }
 
+/**
+ * Treemap `size` blends market cap with absolute % change for the **selected** period so
+ * layout (not just color) shifts when the user changes 1D / 1M / YTD / etc.
+ * Uses √|Δ%| so huge multi-month moves do not blow up the chart.
+ */
+function treemapSizeFromPerformance(baseCap: number, changePct: number | null): number {
+  const base = Math.max(baseCap, 1000);
+  if (changePct == null || !Number.isFinite(changePct)) {
+    return Math.max(base * 0.32, 50_000);
+  }
+  const sqrtPct = Math.sqrt(Math.abs(changePct));
+  const mult = Math.min(3.6, Math.max(0.2, 0.48 + sqrtPct * 0.34));
+  return Math.max(base * mult, 50_000);
+}
+
 function leafFromTicker(
   ticker: string,
   q: YahooV7QuoteRow | undefined,
@@ -58,7 +74,7 @@ function leafFromTicker(
   return {
     name: ticker,
     ...(companyName ? { companyName } : {}),
-    size: leafSize(q),
+    size: treemapSizeFromPerformance(leafSize(q), changePct),
     changePct,
     o: q?.o ?? null,
     h: q?.h ?? null,
