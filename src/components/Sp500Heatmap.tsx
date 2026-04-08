@@ -373,7 +373,9 @@ export function Sp500Heatmap({
               content={treemapCellContent as never}
             >
               <Tooltip
-                content={(props) => <HeatTooltip {...props} periodLabel={periodLabel} />}
+                content={(props) => (
+                  <HeatTooltip {...(props as TooltipProps<number, string>)} periodLabel={periodLabel} />
+                )}
               />
             </Treemap>
           </ResponsiveContainer>
