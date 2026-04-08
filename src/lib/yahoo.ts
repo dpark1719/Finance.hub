@@ -330,7 +330,8 @@ export async function fetchYahooSparkPeriodChangePercents(
   finnhubSymbols: readonly string[],
   range: string,
   interval: string,
-  batchSize = 32,
+  /** Yahoo rejects multi-symbol spark requests above ~20 tickers with HTTP 400. */
+  batchSize = 20,
   pauseMs = 400,
 ): Promise<Map<string, number | null>> {
   const merged = new Map<string, number | null>();

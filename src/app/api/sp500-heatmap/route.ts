@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     const getCached = unstable_cache(
       () => buildSp500HeatmapPayload(range),
-      ["sp500-heatmap-v4", range],
+      ["sp500-heatmap-v5", range],
       { revalidate: 3600 },
     );
     const data = await getCached();
