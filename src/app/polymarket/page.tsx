@@ -3,7 +3,9 @@
 import { barColorForOutcome, OUTCOME_NO_RED, OUTCOME_YES_GREEN } from "@/lib/entity-colors";
 import type { PolymarketTopMarket } from "@/lib/polymarket-top";
 import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+const POLL_MS = 15_000;
 
 const usd0 = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -85,11 +87,11 @@ function YesNoSplitBar({
         <div className="h-full min-w-0 transition-[width] duration-300" style={yesStyle} />
         <div className="h-full min-w-0 transition-[width] duration-300" style={noStyle} />
       </div>
-      <div className="flex justify-between gap-3 text-[11px] tabular-nums text-slate-700 dark:text-zinc-300">
-        <span className="min-w-0 text-left">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] tabular-nums text-slate-700 dark:text-zinc-300">
+        <span className="min-w-0 justify-self-start text-left [overflow-wrap:anywhere]">
           <span className="font-semibold text-emerald-600 dark:text-emerald-400">Yes</span> {formatPct(yesProb)}
         </span>
-        <span className="min-w-0 text-right">
+        <span className="min-w-0 justify-self-end text-right [overflow-wrap:anywhere]">
           <span className="font-semibold text-red-600 dark:text-red-400">No</span> {formatPct(noProb)}
         </span>
       </div>
@@ -126,14 +128,14 @@ function BinarySplitBar({ left, right }: { left: OutcomeRow; right: OutcomeRow }
         <div className="h-full min-w-0 transition-[width] duration-300" style={styleL} title={left.name} />
         <div className="h-full min-w-0 transition-[width] duration-300" style={styleR} title={right.name} />
       </div>
-      <div className="flex justify-between gap-3 text-[11px] leading-snug text-slate-700 dark:text-zinc-300">
-        <span className="min-w-0 max-w-[48%] text-left">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] leading-snug text-slate-700 dark:text-zinc-300">
+        <span className="min-w-0 justify-self-start text-left [overflow-wrap:anywhere]">
           <span className="font-semibold" style={{ color: colorL }}>
             {left.name}
           </span>{" "}
           <span className="tabular-nums">{formatPct(left.probability)}</span>
         </span>
-        <span className="min-w-0 max-w-[48%] text-right">
+        <span className="min-w-0 justify-self-end text-right [overflow-wrap:anywhere]">
           <span className="font-semibold" style={{ color: colorR }}>
             {right.name}
           </span>{" "}
@@ -212,35 +214,31 @@ export default function PolymarketPage() {
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/polymarket-top");
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
-          if (!cancelled) {
-            setErr(typeof data.error === "string" ? data.error : "Could not load Polymarket data");
-            setMarkets([]);
-          }
-          return;
-        }
-        if (!cancelled) {
-          setErr(null);
-          setMarkets(Array.isArray(data.markets) ? data.markets : []);
-          setFetchedAt(typeof data.fetchedAt === "string" ? data.fetchedAt : null);
-        }
-      } catch {
-        if (!cancelled) {
-          setErr("Network error");
-          setMarkets([]);
-        }
+  const loadMarkets = useCallback(async () => {
+    try {
+      const res = await fetch("/api/polymarket-top", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setErr(typeof data.error === "string" ? data.error : "Could not load Polymarket data");
+        setMarkets([]);
+        return;
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      setErr(null);
+      setMarkets(Array.isArray(data.markets) ? data.markets : []);
+      setFetchedAt(typeof data.fetchedAt === "string" ? data.fetchedAt : null);
+    } catch {
+      setErr("Network error");
+      setMarkets([]);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadMarkets();
+    const id = window.setInterval(() => {
+      if (document.visibilityState === "visible") void loadMarkets();
+    }, POLL_MS);
+    return () => window.clearInterval(id);
+  }, [loadMarkets]);
 
   return (
     <main className="mx-auto min-h-screen min-w-0 max-w-5xl px-4 py-10 sm:px-6">
@@ -267,9 +265,12 @@ export default function PolymarketPage() {
           sports matchups use representative team colors when we recognize the name; otherwise colors are assigned for
           contrast.
         </div>
+        <p className="mt-2 max-w-2xl text-xs text-slate-500 dark:text-zinc-600">
+          Data auto-refreshes about every {POLL_MS / 1000}s while this tab is visible (Polymarket Gamma — no API key).
+        </p>
         {fetchedAt && (
-          <p className="mt-3 font-mono text-xs text-slate-500 dark:text-zinc-600">
-            Fetched {new Date(fetchedAt).toLocaleString()}
+          <p className="mt-2 font-mono text-xs text-slate-500 dark:text-zinc-600">
+            Last updated {new Date(fetchedAt).toLocaleString()}
           </p>
         )}
       </header>
@@ -292,7 +293,7 @@ export default function PolymarketPage() {
       {markets.length > 0 && (
         <div className="space-y-4">
           {/* Mobile: cards */}
-          <div className="flex flex-col gap-4 sm:hidden">
+          <div className="flex flex-col gap-4 lg:hidden">
             {markets.map((m, idx) => (
               <article
                 key={m.id}
@@ -334,19 +335,19 @@ export default function PolymarketPage() {
           </div>
 
           {/* Desktop: table */}
-          <div className="hidden overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 sm:block">
-            <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+          <div className="hidden overflow-x-auto rounded-xl border border-slate-200 dark:border-zinc-800 lg:block">
+            <table className="w-full min-w-[800px] table-fixed border-collapse text-left text-sm">
               <caption className="sr-only">
                 Markets sorted by 24-hour volume. Yes is green and No is red; two-outcome markets may use team colors.
               </caption>
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 dark:border-zinc-800 dark:bg-zinc-900/50">
-                  <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">#</th>
-                  <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Market</th>
-                  <th className="px-4 py-3 font-semibold text-slate-700 dark:text-zinc-300">Implied %</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">24h volume</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">All-time volume</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">Liquidity</th>
+                  <th className="w-10 px-3 py-3 font-semibold text-slate-700 dark:text-zinc-300">#</th>
+                  <th className="w-[36%] min-w-0 px-3 py-3 font-semibold text-slate-700 dark:text-zinc-300">Market</th>
+                  <th className="w-[30%] min-w-0 px-3 py-3 font-semibold text-slate-700 dark:text-zinc-300">Implied %</th>
+                  <th className="w-[11%] px-3 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">24h vol</th>
+                  <th className="w-[11%] px-3 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">All-time</th>
+                  <th className="w-[11%] px-3 py-3 text-right font-semibold text-slate-700 dark:text-zinc-300">Liq</th>
                 </tr>
               </thead>
               <tbody>
@@ -355,27 +356,29 @@ export default function PolymarketPage() {
                     key={m.id}
                     className="border-b border-slate-100 dark:border-zinc-800/80 last:border-0 hover:bg-slate-50/80 dark:hover:bg-zinc-900/30"
                   >
-                    <td className="px-4 py-3 font-mono text-slate-500 dark:text-zinc-500">{idx + 1}</td>
-                    <td className="max-w-xs px-4 py-3">
+                    <td className="px-3 py-3 font-mono text-slate-500 dark:text-zinc-500">{idx + 1}</td>
+                    <td className="min-w-0 px-3 py-3 align-top">
                       <a
                         href={m.polymarketUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                        className="break-words font-medium text-blue-600 [overflow-wrap:anywhere] hover:underline dark:text-blue-400"
                       >
                         {m.question}
                       </a>
                     </td>
-                    <td className="min-w-[180px] px-4 py-3 align-top">
-                      <OutcomesLine outcomes={m.outcomes} />
+                    <td className="min-w-0 px-3 py-3 align-top">
+                      <div className="max-w-full">
+                        <OutcomesLine outcomes={m.outcomes} />
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-900 dark:text-zinc-100">
+                    <td className="px-3 py-3 text-right font-mono text-xs tabular-nums text-slate-900 dark:text-zinc-100 sm:text-sm">
                       {formatUsd(m.volume24hr)}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-900 dark:text-zinc-100">
+                    <td className="px-3 py-3 text-right font-mono text-xs tabular-nums text-slate-900 dark:text-zinc-100 sm:text-sm">
                       {formatUsd(m.volumeTotal)}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-slate-900 dark:text-zinc-100">
+                    <td className="px-3 py-3 text-right font-mono text-xs tabular-nums text-slate-900 dark:text-zinc-100 sm:text-sm">
                       {formatUsd(m.liquidity)}
                     </td>
                   </tr>

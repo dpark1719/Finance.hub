@@ -104,7 +104,8 @@ function parseMarket(m: Record<string, unknown>): PolymarketTopMarket | null {
 export async function fetchPolymarketTopByVolume24h(): Promise<PolymarketTopMarket[]> {
   const res = await fetch(GAMMA_TOP, {
     headers: { Accept: "application/json" },
-    next: { revalidate: 120 },
+    /** Short ISR so Gamma updates often without hammering on every sub-request. */
+    next: { revalidate: 12 },
   });
   if (!res.ok) {
     throw new Error(`Polymarket Gamma HTTP ${res.status}`);

@@ -1,8 +1,11 @@
 import { fetchPolymarketTopByVolume24h } from "@/lib/polymarket-top";
 import { NextResponse } from "next/server";
 
-/** Match Gamma refetch; CDN may cache briefly. */
-export const revalidate = 120;
+/**
+ * Revalidate often; Gamma API is free. Keeps edge/server from hammering origin every millisecond.
+ * Clients poll + use cache: no-store so browsers don’t stick on stale JSON.
+ */
+export const revalidate = 12;
 
 export async function GET() {
   try {
@@ -11,7 +14,7 @@ export async function GET() {
       { markets, fetchedAt: new Date().toISOString() },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
+          "Cache-Control": "public, s-maxage=12, stale-while-revalidate=30",
         },
       },
     );
