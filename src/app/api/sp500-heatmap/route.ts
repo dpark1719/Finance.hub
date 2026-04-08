@@ -9,18 +9,20 @@ export const maxDuration = 60;
 
 export const runtime = "nodejs";
 
+/** Pass `range` as an argument so the cache key includes the period (do not rely on closure + empty `()`). */
+const getCachedHeatmap = unstable_cache(
+  async (range: HeatmapRangeKey) => buildSp500HeatmapPayload(range),
+  ["sp500-heatmap-v6"],
+  { revalidate: 3600 },
+);
+
 export async function GET(request: Request) {
   try {
     const rangeParam = new URL(request.url).searchParams.get("range");
     const range: HeatmapRangeKey =
       rangeParam && isHeatmapRangeKey(rangeParam) ? rangeParam : "1d";
 
-    const getCached = unstable_cache(
-      () => buildSp500HeatmapPayload(range),
-      ["sp500-heatmap-v5", range],
-      { revalidate: 3600 },
-    );
-    const data = await getCached();
+    const data = await getCachedHeatmap(range);
     return NextResponse.json(data, {
       headers: {
         "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",

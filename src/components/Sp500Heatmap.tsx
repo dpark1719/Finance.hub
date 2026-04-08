@@ -2,7 +2,7 @@
 
 import type { HeatmapRangeKey } from "@/lib/yahoo-chart-presets";
 import { HEATMAP_RANGE_OPTIONS } from "@/lib/yahoo-chart-presets";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ResponsiveContainer,
   Tooltip,
@@ -247,13 +247,20 @@ export function Sp500Heatmap({
   const [refreshAfter, setRefreshAfter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  /** Ignore late responses when the user switches period before the prior fetch finishes. */
+  const loadSeq = useRef(0);
 
   const load = useCallback(async (range: HeatmapRangeKey) => {
+    const seq = ++loadSeq.current;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/sp500-heatmap?range=${encodeURIComponent(range)}`);
+      const res = await fetch(
+        `/api/sp500-heatmap?range=${encodeURIComponent(range)}`,
+        { cache: "no-store" },
+      );
       const data = await res.json().catch(() => ({}));
+      if (seq !== loadSeq.current) return;
       if (!res.ok) {
         setError(typeof data.error === "string" ? data.error : "Could not load heatmap");
         setTree([]);
@@ -264,10 +271,11 @@ export function Sp500Heatmap({
       setRefreshAfter(typeof data.refreshAfter === "string" ? data.refreshAfter : null);
       setPeriodLabel(typeof data.periodLabel === "string" ? data.periodLabel : "1 day");
     } catch {
+      if (seq !== loadSeq.current) return;
       setError("Network error");
       setTree([]);
     } finally {
-      setLoading(false);
+      if (seq === loadSeq.current) setLoading(false);
     }
   }, []);
 
@@ -365,6 +373,7 @@ export function Sp500Heatmap({
         >
           <ResponsiveContainer width="100%" height="100%">
             <Treemap
+              key={heatmapRange}
               data={tree as never}
               dataKey="size"
               type="flat"
