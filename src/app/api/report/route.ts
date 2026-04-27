@@ -1,11 +1,12 @@
 import { buildStockReport } from "@/lib/report-builder";
+import { getFinnhubApiKey } from "@/lib/server-env";
 import { resolveStockQuery } from "@/lib/symbol-resolve";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const envKey = process.env.FINNHUB_API_KEY?.trim().replace(/^["']|["']$/g, "").trim();
+  const envKey = getFinnhubApiKey();
   if (!envKey) {
     return NextResponse.json(
       {

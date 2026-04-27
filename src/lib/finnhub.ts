@@ -1,3 +1,5 @@
+import { getFinnhubApiKey } from "@/lib/server-env";
+
 /** Trailing slash required: `new URL("/quote", base)` would drop `/api/v1` and hit the wrong HTML page. */
 const FINNHUB_BASE = "https://finnhub.io/api/v1/";
 
@@ -20,19 +22,9 @@ export function isFinnhubBlockedOrRateLimited(e: unknown): boolean {
 }
 
 function getToken(): string {
-  const raw = process.env.FINNHUB_API_KEY;
-  if (!raw) {
-    throw new Error("FINNHUB_API_KEY is not set");
-  }
-  let key = raw.trim();
-  if (
-    (key.startsWith('"') && key.endsWith('"')) ||
-    (key.startsWith("'") && key.endsWith("'"))
-  ) {
-    key = key.slice(1, -1).trim();
-  }
+  const key = getFinnhubApiKey();
   if (!key) {
-    throw new Error("FINNHUB_API_KEY is empty after trimming");
+    throw new Error("FINNHUB_API_KEY is not set");
   }
   return key;
 }
