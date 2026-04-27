@@ -60,7 +60,13 @@ export default function Home() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setReport(null);
-        setErr(typeof data.error === "string" ? data.error : "Request failed");
+        const base =
+          typeof data.error === "string" ? data.error : "Request failed";
+        const hint =
+          typeof (data as { hint?: string }).hint === "string"
+            ? (data as { hint: string }).hint
+            : "";
+        setErr(hint ? `${base}\n\n${hint}` : base);
         return;
       }
       setReport(data as StockReport);
@@ -164,7 +170,7 @@ export default function Home() {
 
           {err && (
             <div
-              className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+              className="whitespace-pre-line rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
               role="alert"
             >
               {err}

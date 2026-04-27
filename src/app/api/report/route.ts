@@ -8,7 +8,11 @@ export async function GET(req: NextRequest) {
   const envKey = process.env.FINNHUB_API_KEY?.trim().replace(/^["']|["']$/g, "").trim();
   if (!envKey) {
     return NextResponse.json(
-      { error: "FINNHUB_API_KEY is not set. Copy .env.example to .env.local." },
+      {
+        error: "FINNHUB_API_KEY is not set for this server environment.",
+        hint:
+          "Local: In the project root, copy .env.example to .env.local, set FINNHUB_API_KEY (free key: https://finnhub.io/register), save the file, then restart the dev server (stop and run npm run dev again). Vercel or other hosts: add FINNHUB_API_KEY under Project → Environment Variables for Production and Preview, then Redeploy.",
+      },
       { status: 503 },
     );
   }
