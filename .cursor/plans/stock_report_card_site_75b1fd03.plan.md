@@ -3,7 +3,7 @@ name: Stock report card site
 overview: Greenfield Next.js app that accepts a global ticker, fetches fundamentals and analyst consensus from Finnhub (free tier), derives letter grades / scores for each category, and presents a report-card UI—with a practical sentiment layer because equity “Fear & Greed” has no stable free official API.
 todos:
   - id: scaffold-next
-    content: Scaffold Next.js (App Router) + TypeScript + Tailwind in P1; add .env.example for FINNHUB_API_KEY
+    content: Scaffold Next.js (App Router) + TypeScript + Tailwind in finance.hub; add .env.example for FINNHUB_API_KEY
     status: pending
   - id: finnhub-client
     content: "Implement lib/finnhub.ts: symbol search, profile, quote, metrics/financials slices needed for MVP; error typing"
@@ -104,12 +104,12 @@ Each section: **grade badge**, **sparkline optional (v2)**, **source footnote** 
 
 After you approve execution, scaffold:
 
-- `[package.json](/Users/dpark/Documents/P1/package.json)`, Next + TS + Tailwind
-- `[app/page.tsx](/Users/dpark/Documents/P1/app/page.tsx)` — search + report view
-- `[app/api/report/route.ts](/Users/dpark/Documents/P1/app/api/report/route.ts)` — aggregator
-- `[lib/finnhub.ts](/Users/dpark/Documents/P1/lib/finnhub.ts)` — typed fetch helpers
-- `[lib/grades.ts](/Users/dpark/Documents/P1/lib/grades.ts)` — scoring
-- `[.env.example](/Users/dpark/Documents/P1/.env.example)` — `FINNHUB_API_KEY=`
+- `[package.json](/Users/dpark/Documents/finance.hub/package.json)`, Next + TS + Tailwind
+- `[app/page.tsx](/Users/dpark/Documents/finance.hub/app/page.tsx)` — search + report view
+- `[app/api/report/route.ts](/Users/dpark/Documents/finance.hub/app/api/report/route.ts)` — aggregator
+- `[lib/finnhub.ts](/Users/dpark/Documents/finance.hub/lib/finnhub.ts)` — typed fetch helpers
+- `[lib/grades.ts](/Users/dpark/Documents/finance.hub/lib/grades.ts)` — scoring
+- `[.env.example](/Users/dpark/Documents/finance.hub/.env.example)` — `FINNHUB_API_KEY=`
 
 ## Future upgrades (out of MVP)
 
