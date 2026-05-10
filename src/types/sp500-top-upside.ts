@@ -14,5 +14,8 @@ export type Sp500TopUpsidePayloadJSON = {
   refreshAfter: string;
   marketSession: "open" | "closed";
   periodLabel: string;
+  /** Top 10 by positive imputed upside (consensus vs spot). */
   rows: Sp500TopUpsideRowJSON[];
+  /** Top 10 by most negative imputed upside (consensus below spot). */
+  losers: Sp500TopUpsideRowJSON[];
 };

@@ -92,6 +92,10 @@ export async function buildSp500TopUpsidePayload(): Promise<Sp500TopUpsidePayloa
   const positive = scored.filter((r) => r.upsidePct > 0);
   const rows = positive.slice(0, 10);
 
+  const negative = scored.filter((r) => r.upsidePct < 0);
+  negative.sort((a, b) => a.upsidePct - b.upsidePct);
+  const losers = negative.slice(0, 10);
+
   const generatedAt = new Date().toISOString();
   const refreshAfter = new Date(Date.now() + 900_000).toISOString();
 
@@ -101,5 +105,6 @@ export async function buildSp500TopUpsidePayload(): Promise<Sp500TopUpsidePayloa
     marketSession: getUsEquitySession(),
     periodLabel: "Consensus mean target vs. last price (Yahoo)",
     rows,
+    losers,
   };
 }

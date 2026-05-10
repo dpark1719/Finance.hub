@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 
 const getCachedTopUpside = unstable_cache(
   async () => buildSp500TopUpsidePayload(),
-  ["sp500-top-upside-v1"],
+  ["sp500-top-upside-v2-losers"],
   { revalidate: 900 },
 );
 
