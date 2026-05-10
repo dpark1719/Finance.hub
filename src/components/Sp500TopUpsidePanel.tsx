@@ -3,19 +3,8 @@
 import { getUsEquitySession } from "@/lib/us-market-hours";
 import type { Sp500TopUpsidePayloadJSON, Sp500TopUpsideRowJSON } from "@/types/sp500-top-upside";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
 const POLL_MS = 900_000;
-
-const BAR_FILL_GAIN = "rgb(82 82 91)";
-const BAR_FILL_LOSS = "rgb(63 63 70)";
 
 function fmtMoney(n: number, currency: string | null): string {
   const cur = currency && currency.trim() ? currency.trim() : "USD";
@@ -34,124 +23,6 @@ function fmtPct(n: number): string {
 function titleForRow(r: Sp500TopUpsideRowJSON): string {
   const name = (r.name ?? "").trim();
   return name ? `${name} (${r.symbol})` : r.symbol;
-}
-
-/** Short label for chart Y-axis ticks (SVG ticks don’t wrap). */
-function chartLabel(r: Sp500TopUpsideRowJSON): string {
-  const t = titleForRow(r);
-  return t.length > 44 ? `${t.slice(0, 42)}…` : t;
-}
-
-function UpsideChart(props: {
-  rows: Sp500TopUpsideRowJSON[];
-  variant: "gain" | "loss";
-  onBarClick: (row: Sp500TopUpsideRowJSON) => void;
-}) {
-  const { rows, variant, onBarClick } = props;
-  if (rows.length === 0) return null;
-
-  const chartData = [...rows]
-    .sort((a, b) => a.upsidePct - b.upsidePct)
-    .map((r) => ({ ...r, displayLabel: chartLabel(r) }));
-
-  const fill = variant === "gain" ? BAR_FILL_GAIN : BAR_FILL_LOSS;
-
-  if (variant === "gain") {
-    const maxUpside = rows.reduce((m, r) => Math.max(m, r.upsidePct), 0);
-    const chartMax = maxUpside > 0 ? Math.ceil(maxUpside * 1.08) : 10;
-    return (
-      <div className="h-[220px] w-full min-w-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart layout="vertical" data={chartData} margin={{ top: 4, right: 8, left: 4, bottom: 4 }}>
-            <XAxis
-              type="number"
-              domain={[0, chartMax]}
-              tickFormatter={(v) => `${Number(v).toFixed(0)}%`}
-              tick={{ fontSize: 10, fill: "currentColor" }}
-              className="text-zinc-500"
-            />
-            <YAxis
-              type="category"
-              dataKey="displayLabel"
-              width={148}
-              interval={0}
-              tick={{ fontSize: 9, fill: "currentColor" }}
-              className="text-zinc-600 dark:text-zinc-400"
-            />
-            <Tooltip
-              contentStyle={{
-                borderRadius: "8px",
-                fontSize: "12px",
-                border: "1px solid rgb(63 63 70 / 0.5)",
-              }}
-              formatter={(value) => {
-                const v = typeof value === "number" ? value : Number(value);
-                return Number.isFinite(v) ? [`${v.toFixed(1)}%`, "Upside"] : ["—", "Upside"];
-              }}
-            />
-            <Bar
-              dataKey="upsidePct"
-              fill={fill}
-              radius={[0, 4, 4, 0]}
-              className="cursor-pointer"
-              onClick={(state: unknown) => {
-                const row = (state as { payload?: Sp500TopUpsideRowJSON }).payload;
-                if (row?.symbol) onBarClick(row);
-              }}
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
-
-  const minUpside = rows.reduce((m, r) => Math.min(m, r.upsidePct), 0);
-  const chartMin = minUpside < 0 ? Math.floor(minUpside * 1.08) : -10;
-
-  return (
-    <div className="h-[220px] w-full min-w-0">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart layout="vertical" data={chartData} margin={{ top: 4, right: 8, left: 4, bottom: 4 }}>
-          <XAxis
-            type="number"
-            domain={[chartMin, 0]}
-            tickFormatter={(v) => `${Number(v).toFixed(0)}%`}
-            tick={{ fontSize: 10, fill: "currentColor" }}
-            className="text-zinc-500"
-          />
-          <YAxis
-            type="category"
-            dataKey="displayLabel"
-            width={148}
-            interval={0}
-            tick={{ fontSize: 9, fill: "currentColor" }}
-            className="text-zinc-600 dark:text-zinc-400"
-          />
-          <Tooltip
-            contentStyle={{
-              borderRadius: "8px",
-              fontSize: "12px",
-              border: "1px solid rgb(63 63 70 / 0.5)",
-            }}
-            formatter={(value) => {
-              const v = typeof value === "number" ? value : Number(value);
-              return Number.isFinite(v) ? [`${v.toFixed(1)}%`, "Upside"] : ["—", "Upside"];
-            }}
-          />
-          <Bar
-            dataKey="upsidePct"
-            fill={fill}
-            radius={[0, 4, 4, 0]}
-            className="cursor-pointer"
-            onClick={(state: unknown) => {
-              const row = (state as { payload?: Sp500TopUpsideRowJSON }).payload;
-              if (row?.symbol) onBarClick(row);
-            }}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
 }
 
 function RowList(props: {
@@ -306,10 +177,7 @@ export function Sp500TopUpsidePanel(props: {
                 No names with positive consensus upside (coverage gaps or stale targets).
               </p>
             ) : (
-              <>
-                <UpsideChart rows={rows} variant="gain" onBarClick={(r) => onSelectSymbol(r.symbol)} />
-                <RowList rows={rows} variant="gain" selectedSymbol={selectedSymbol} onSelectSymbol={onSelectSymbol} />
-              </>
+              <RowList rows={rows} variant="gain" selectedSymbol={selectedSymbol} onSelectSymbol={onSelectSymbol} />
             )}
           </div>
 
@@ -322,10 +190,7 @@ export function Sp500TopUpsidePanel(props: {
                 No names with negative consensus upside (coverage gaps or stale targets).
               </p>
             ) : (
-              <>
-                <UpsideChart rows={losers} variant="loss" onBarClick={(r) => onSelectSymbol(r.symbol)} />
-                <RowList rows={losers} variant="loss" selectedSymbol={selectedSymbol} onSelectSymbol={onSelectSymbol} />
-              </>
+              <RowList rows={losers} variant="loss" selectedSymbol={selectedSymbol} onSelectSymbol={onSelectSymbol} />
             )}
           </div>
         </div>
