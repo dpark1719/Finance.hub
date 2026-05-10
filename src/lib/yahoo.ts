@@ -174,6 +174,10 @@ export interface YahooV7QuoteRow {
   /** Prefer long form for UI (heatmap tooltip, etc.). */
   companyName?: string;
   shortName?: string;
+  /** ISO 4217 when Yahoo sends it (heatmap / upside panel). */
+  currency: string | null;
+  /** Analyst mean target when present on the batch quote (often absent — use `fetchYahooFundamentals`). */
+  targetMean: number | null;
   marketCap: number | null;
   changePct: number | null;
   o: number | null;
@@ -188,6 +192,18 @@ function parseYahooV7Num(v: unknown): number | null {
   return null;
 }
 
+/** Yahoo sometimes sends `targetMeanPrice` as a number or `{ raw }` on quote rows. */
+function parseYahooV7TargetMean(r: Record<string, unknown>): number | null {
+  const v = r.targetMeanPrice;
+  const n = parseYahooV7Num(v);
+  if (n != null) return n;
+  if (v && typeof v === "object" && "raw" in v) {
+    const raw = (v as { raw?: unknown }).raw;
+    return parseYahooV7Num(raw);
+  }
+  return null;
+}
+
 function mapYahooV7Row(r: Record<string, unknown>): YahooV7QuoteRow {
   const sym = String(r.symbol ?? "");
   const longN =
@@ -197,10 +213,13 @@ function mapYahooV7Row(r: Record<string, unknown>): YahooV7QuoteRow {
   const disp =
     typeof r.displayName === "string" ? r.displayName.trim() : "";
   const companyName = longN || shortN || disp || undefined;
+  const cur = r.currency;
   return {
     finnhubSymbol: yahooTickerToFinnhub(sym),
     companyName,
     shortName: shortN || longN || disp || undefined,
+    currency: typeof cur === "string" && cur.trim() ? cur.trim() : null,
+    targetMean: parseYahooV7TargetMean(r),
     marketCap: parseYahooV7Num(r.marketCap),
     changePct: parseYahooV7Num(r.regularMarketChangePercent),
     o: parseYahooV7Num(r.regularMarketOpen),

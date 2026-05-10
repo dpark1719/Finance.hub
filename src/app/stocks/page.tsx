@@ -31,6 +31,19 @@ const Sp500Heatmap = dynamic(
   },
 );
 
+const Sp500TopUpsidePanel = dynamic(
+  () =>
+    import("@/components/Sp500TopUpsidePanel").then((m) => m.Sp500TopUpsidePanel),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/90 dark:bg-zinc-950/40 p-8 text-center text-xs text-slate-500 dark:text-zinc-500">
+        Loading top upside…
+      </div>
+    ),
+  },
+);
+
 const gradeStyles: Record<LetterGrade, string> = {
   A: "bg-emerald-500/15 text-emerald-900 border-emerald-500/40 dark:bg-emerald-500/20 dark:text-emerald-300",
   B: "bg-lime-500/15 text-lime-900 border-lime-500/40 dark:bg-lime-500/20 dark:text-lime-200",
@@ -105,15 +118,25 @@ export default function Home() {
   return (
     <main className="mx-auto min-h-screen min-w-0 max-w-7xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-slate-200 dark:border-zinc-800 pb-8">
-        <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
-          finance.hub · Stocks
-        </p>
-        <h1
-          className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
-          style={{ fontFamily: "var(--font-dm-sans), system-ui" }}
-        >
-          Ten metrics, one page
-        </h1>
+        <div className="lg:grid lg:grid-cols-[1fr_minmax(260px,380px)] lg:items-start lg:gap-8">
+          <div className="min-w-0">
+            <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
+              finance.hub · Stocks
+            </p>
+            <h1
+              className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl"
+              style={{ fontFamily: "var(--font-dm-sans), system-ui" }}
+            >
+              Ten metrics, one page
+            </h1>
+          </div>
+          <div className="mt-8 min-w-0 lg:mt-2">
+            <Sp500TopUpsidePanel
+              onSelectSymbol={onHeatmapSymbol}
+              selectedSymbol={report?.symbol ?? null}
+            />
+          </div>
+        </div>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
           P/E, consensus upside, PEG, leverage, free cash flow, ROE, RSI, beta,
           CNN Fear &amp; Greed, and dividend payout — graded for quick context.
