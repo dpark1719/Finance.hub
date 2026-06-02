@@ -118,7 +118,7 @@ export default function Home() {
   return (
     <main className="mx-auto min-h-screen min-w-0 max-w-7xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-slate-200 dark:border-zinc-800 pb-8">
-        <div className="lg:grid lg:grid-cols-[1fr_minmax(260px,380px)] lg:items-start lg:gap-8">
+        <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8 xl:gap-10">
           <div className="min-w-0">
             <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
               finance.hub · Stocks
@@ -129,55 +129,56 @@ export default function Home() {
             >
               Ten metrics, one page
             </h1>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
+              P/E, consensus upside, PEG, leverage, free cash flow, ROE, RSI, beta,
+              CNN Fear &amp; Greed, and dividend payout — graded for quick context.
+              Type a ticker (<span className="font-mono">AAPL</span>,{" "}
+              <span className="font-mono">brk.b</span>) or an{" "}
+              <span className="text-slate-700 dark:text-zinc-300">S&amp;P 500</span> or{" "}
+              <span className="text-slate-700 dark:text-zinc-300">KOSPI</span> names
+              (<span className="font-mono">apple</span>,{" "}
+              <span className="font-mono">samsung electronics</span>,{" "}
+              <span className="font-mono">삼성전자</span>,{" "}
+              <span className="font-mono">005930.KS</span>). Other names use
+              Finnhub search, with Yahoo fallbacks when the free tier blocks an exchange.
+              Not investment advice; data depends on coverage and delays.
+            </p>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+              <input
+                type="text"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void run()}
+                placeholder="Company or ticker (apple, Google, AAPL, 7203.T)"
+                className="min-w-0 flex-1 rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900/80 px-4 py-3 font-mono text-base text-slate-900 dark:text-white outline-none ring-blue-500/30 placeholder:text-slate-600 dark:text-zinc-600 focus:border-blue-500/50 focus:ring-2 sm:min-w-[12rem] sm:text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => void run()}
+                disabled={loading || !q.trim()}
+                className="touch-manipulation shrink-0 rounded-lg bg-blue-600 px-5 py-3 text-base font-medium text-slate-900 dark:text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
+              >
+                {loading ? "Loading…" : "Run report"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setWatchAddRequest((n) => n + 1)}
+                disabled={!watchTicker}
+                title="Adds the current ticker (search box, or last report below) to your active watchlist when signed in"
+                className="touch-manipulation shrink-0 rounded-lg border border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-800 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Watchlist +
+              </button>
+            </div>
           </div>
-          <div className="mt-8 min-w-0 lg:mt-2">
+
+          <div className="mt-8 min-w-0 lg:mt-0">
             <Sp500TopUpsidePanel
               onSelectSymbol={onHeatmapSymbol}
               selectedSymbol={report?.symbol ?? null}
             />
           </div>
-        </div>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
-          P/E, consensus upside, PEG, leverage, free cash flow, ROE, RSI, beta,
-          CNN Fear &amp; Greed, and dividend payout — graded for quick context.
-          Type a ticker (<span className="font-mono">AAPL</span>,{" "}
-          <span className="font-mono">brk.b</span>) or an{" "}
-          <span className="text-slate-700 dark:text-zinc-300">S&amp;P 500</span> or{" "}
-          <span className="text-slate-700 dark:text-zinc-300">KOSPI</span> names
-          (<span className="font-mono">apple</span>,{" "}
-          <span className="font-mono">samsung electronics</span>,{" "}
-          <span className="font-mono">삼성전자</span>,{" "}
-          <span className="font-mono">005930.KS</span>). Other names use
-          Finnhub search, with Yahoo fallbacks when the free tier blocks an exchange.
-          Not investment advice; data depends on coverage and delays.
-        </p>
-
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <input
-            type="text"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && void run()}
-            placeholder="Company or ticker (apple, Google, AAPL, 7203.T)"
-            className="min-w-0 flex-1 rounded-lg border border-slate-300 dark:border-zinc-700 bg-slate-50 dark:bg-zinc-900/80 px-4 py-3 font-mono text-base text-slate-900 dark:text-white outline-none ring-blue-500/30 placeholder:text-slate-600 dark:text-zinc-600 focus:border-blue-500/50 focus:ring-2 sm:max-w-md sm:text-sm"
-          />
-          <button
-            type="button"
-            onClick={() => void run()}
-            disabled={loading || !q.trim()}
-            className="touch-manipulation shrink-0 rounded-lg bg-blue-600 px-5 py-3 text-base font-medium text-slate-900 dark:text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
-          >
-            {loading ? "Loading…" : "Run report"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setWatchAddRequest((n) => n + 1)}
-            disabled={!watchTicker}
-            title="Adds the current ticker (search box, or last report below) to your active watchlist when signed in"
-            className="touch-manipulation shrink-0 rounded-lg border border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800 px-4 py-3 text-sm font-medium text-slate-800 dark:text-zinc-200 hover:bg-slate-200 dark:hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Watchlist +
-          </button>
         </div>
       </header>
 

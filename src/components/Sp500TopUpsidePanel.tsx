@@ -167,7 +167,7 @@ export function Sp500TopUpsidePanel(props: {
       ) : null}
 
       {!loading && !err ? (
-        <div className="mt-4 space-y-8">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-600 dark:text-zinc-400">
               Top upside
