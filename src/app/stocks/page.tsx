@@ -3,6 +3,12 @@
 import type { LetterGrade, StockReport } from "@/types/report";
 import { WatchlistsPanel } from "@/components/WatchlistsPanel";
 import { useSupabaseUser } from "@/lib/hooks/useSupabaseUser";
+import {
+  KOSPI_200_INDEX_CONFIG,
+  SP500_INDEX_CONFIG,
+  STOCKS_INDEX_TABS,
+  type StocksIndexTab,
+} from "@/lib/stocks-index-config";
 import dynamic from "next/dynamic";
 import { useCallback, useMemo, useState } from "react";
 
@@ -19,26 +25,26 @@ const StockPriceChart = dynamic(
   },
 );
 
-const Sp500Heatmap = dynamic(
-  () => import("@/components/Sp500Heatmap").then((m) => m.Sp500Heatmap),
+const IndexHeatmap = dynamic(
+  () => import("@/components/Sp500Heatmap").then((m) => m.IndexHeatmap),
   {
     ssr: false,
     loading: () => (
       <div className="mt-10 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-100/90 dark:bg-zinc-950/40 p-12 text-center text-sm text-slate-500 dark:text-zinc-500">
-        Loading S&amp;P 500 heatmap…
+        Loading heatmap…
       </div>
     ),
   },
 );
 
-const Sp500TopUpsidePanel = dynamic(
+const IndexTopUpsidePanel = dynamic(
   () =>
-    import("@/components/Sp500TopUpsidePanel").then((m) => m.Sp500TopUpsidePanel),
+    import("@/components/Sp500TopUpsidePanel").then((m) => m.IndexTopUpsidePanel),
   {
     ssr: false,
     loading: () => (
       <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/90 dark:bg-zinc-950/40 p-8 text-center text-xs text-slate-500 dark:text-zinc-500">
-        Loading top upside…
+        Loading leaders &amp; laggards…
       </div>
     ),
   },
@@ -62,6 +68,9 @@ export default function Home() {
   const [report, setReport] = useState<StockReport | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [watchAddRequest, setWatchAddRequest] = useState(0);
+  const [indexTab, setIndexTab] = useState<StocksIndexTab>("sp500");
+
+  const indexConfig = indexTab === "sp500" ? SP500_INDEX_CONFIG : KOSPI_200_INDEX_CONFIG;
 
   const run = useCallback(async (symbolOverride?: string) => {
     const symbol = (symbolOverride ?? q).trim();
@@ -118,6 +127,29 @@ export default function Home() {
   return (
     <main className="mx-auto min-h-screen min-w-0 max-w-7xl px-4 py-10 sm:px-6">
       <header className="mb-10 border-b border-slate-200 dark:border-zinc-800 pb-8">
+        <div
+          className="mb-6 flex flex-wrap gap-2"
+          role="tablist"
+          aria-label="Index market"
+        >
+          {STOCKS_INDEX_TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={indexTab === id}
+              onClick={() => setIndexTab(id)}
+              className={`touch-manipulation rounded-lg px-4 py-2 text-sm font-medium transition ${
+                indexTab === id
+                  ? "bg-blue-600 text-white"
+                  : "border border-slate-300 dark:border-zinc-600 bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:border-slate-400 dark:hover:border-zinc-500"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8 xl:gap-10">
           <div className="min-w-0">
             <p className="font-mono text-xs uppercase tracking-widest text-slate-500 dark:text-zinc-500">
@@ -174,7 +206,11 @@ export default function Home() {
           </div>
 
           <div className="mt-8 min-w-0 lg:mt-0">
-            <Sp500TopUpsidePanel
+            <IndexTopUpsidePanel
+              key={indexTab}
+              apiPath={indexConfig.upside.apiPath}
+              ariaLabel={indexConfig.upside.ariaLabel}
+              sessionKind={indexConfig.upside.sessionKind}
               onSelectSymbol={onHeatmapSymbol}
               selectedSymbol={report?.symbol ?? null}
             />
@@ -190,7 +226,13 @@ export default function Home() {
         <div
           className={`min-w-0 space-y-6 ${showWatchlistColumn ? "order-2 lg:order-1" : ""}`}
         >
-          <Sp500Heatmap onSelectSymbol={onHeatmapSymbol} />
+          <IndexHeatmap
+            key={indexTab}
+            apiPath={indexConfig.heatmap.apiPath}
+            title={indexConfig.heatmap.title}
+            description={indexConfig.heatmap.description}
+            onSelectSymbol={onHeatmapSymbol}
+          />
 
           {err && (
             <div

@@ -235,10 +235,16 @@ function HeatmapCell({
   );
 }
 
-export function Sp500Heatmap({
+export function IndexHeatmap({
   onSelectSymbol,
+  apiPath,
+  title,
+  description,
 }: {
   onSelectSymbol: (finnhubSymbol: string) => void;
+  apiPath: string;
+  title: string;
+  description: string;
 }) {
   const [heatmapRange, setHeatmapRange] = useState<HeatmapRangeKey>("1d");
   const [periodLabel, setPeriodLabel] = useState("1 day");
@@ -259,7 +265,7 @@ export function Sp500Heatmap({
     if (clearTreeForNewPeriod) setTree([]);
     try {
       const res = await fetch(
-        `/api/sp500-heatmap?range=${encodeURIComponent(range)}`,
+        `${apiPath}?range=${encodeURIComponent(range)}`,
         { cache: "no-store" },
       );
       const data = await res.json().catch(() => ({}));
@@ -288,7 +294,7 @@ export function Sp500Heatmap({
     } finally {
       if (seq === loadSeq.current) setLoading(false);
     }
-  }, []);
+  }, [apiPath]);
 
   useEffect(() => {
     void load(heatmapRange, true);
@@ -318,13 +324,8 @@ export function Sp500Heatmap({
     <section className="mt-10 border-t border-slate-200 dark:border-zinc-800 pt-10">
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">S&amp;P 500 heatmap</h2>
-          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-500">
-            Tile area blends market cap with how large the move was for the selected period (bigger
-            movers get more space; missing data shrinks). Color = sign of that return (1 day uses
-            regular session change; longer ranges use Yahoo spark first→last close). Hover for OHLC;
-            click to run the report. Data refreshes about every hour.
-          </p>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
+          <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-zinc-500">{description}</p>
         </div>
         {generatedAt && (
           <p className="font-mono text-xs text-slate-600 dark:text-zinc-600">
@@ -408,5 +409,22 @@ export function Sp500Heatmap({
         for this period. Yahoo Finance (quotes + spark for multi-day ranges).
       </p>
     </section>
+  );
+}
+
+const SP500_HEATMAP_API = "/api/sp500-heatmap";
+
+export function Sp500Heatmap({
+  onSelectSymbol,
+}: {
+  onSelectSymbol: (finnhubSymbol: string) => void;
+}) {
+  return (
+    <IndexHeatmap
+      apiPath={SP500_HEATMAP_API}
+      title="S&P 500 heatmap"
+      description="Tile area blends market cap with how large the move was for the selected period (bigger movers get more space; missing data shrinks). Color = sign of that return (1 day uses regular session change; longer ranges use Yahoo spark first→last close). Hover for OHLC; click to run the report. Data refreshes about every hour."
+      onSelectSymbol={onSelectSymbol}
+    />
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { getKrEquitySession } from "@/lib/kr-market-hours";
 import { getUsEquitySession } from "@/lib/us-market-hours";
 import type { Sp500TopUpsidePayloadJSON, Sp500TopUpsideRowJSON } from "@/types/sp500-top-upside";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -75,20 +76,36 @@ function RowList(props: {
   );
 }
 
-export function Sp500TopUpsidePanel(props: {
+export type IndexSessionKind = "us" | "kr";
+
+function getSession(kind: IndexSessionKind) {
+  return kind === "kr" ? getKrEquitySession() : getUsEquitySession();
+}
+
+function sessionLabel(kind: IndexSessionKind, session: "open" | "closed"): string {
+  if (kind === "kr") {
+    return session === "open" ? " · Korea session open" : " · Korea session closed";
+  }
+  return session === "open" ? " · US session open" : " · US session closed";
+}
+
+export function IndexTopUpsidePanel(props: {
   onSelectSymbol: (symbol: string) => void;
   selectedSymbol?: string | null;
+  apiPath: string;
+  ariaLabel: string;
+  sessionKind: IndexSessionKind;
 }) {
-  const { onSelectSymbol, selectedSymbol } = props;
+  const { onSelectSymbol, selectedSymbol, apiPath, ariaLabel, sessionKind } = props;
   const [payload, setPayload] = useState<Sp500TopUpsidePayloadJSON | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const prevSession = useRef<ReturnType<typeof getUsEquitySession>>(getUsEquitySession());
+  const prevSession = useRef<ReturnType<typeof getUsEquitySession>>(getSession(sessionKind));
 
   const load = useCallback(async () => {
     setErr(null);
     try {
-      const res = await fetch("/api/sp500-top-upside", { cache: "no-store" });
+      const res = await fetch(apiPath, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setPayload(null);
@@ -102,7 +119,7 @@ export function Sp500TopUpsidePanel(props: {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [apiPath]);
 
   useEffect(() => {
     void load();
@@ -123,12 +140,12 @@ export function Sp500TopUpsidePanel(props: {
 
   useEffect(() => {
     const id = window.setInterval(() => {
-      const s = getUsEquitySession();
+      const s = getSession(sessionKind);
       if (prevSession.current === "open" && s === "closed") void load();
       prevSession.current = s;
     }, 60_000);
     return () => window.clearInterval(id);
-  }, [load]);
+  }, [load, sessionKind]);
 
   const rows = payload?.rows ?? [];
   const losers = payload?.losers ?? [];
@@ -136,7 +153,7 @@ export function Sp500TopUpsidePanel(props: {
   return (
     <section
       className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/90 dark:bg-zinc-950/50 p-4 shadow-sm"
-      aria-label="S&P 500 consensus upside and downside"
+      aria-label={ariaLabel}
     >
       <div className="flex flex-col gap-1 border-b border-zinc-200/80 pb-3 dark:border-zinc-800">
         <h2 className="text-sm font-semibold leading-tight text-zinc-900 dark:text-white">
@@ -151,7 +168,7 @@ export function Sp500TopUpsidePanel(props: {
         {payload?.generatedAt ? (
           <p className="font-mono text-[10px] text-zinc-500 dark:text-zinc-600">
             As of {new Date(payload.generatedAt).toLocaleString()}
-            {payload.marketSession === "open" ? " · US session open" : " · US session closed"}
+            {sessionLabel(sessionKind, payload.marketSession)}
           </p>
         ) : null}
       </div>
@@ -196,5 +213,19 @@ export function Sp500TopUpsidePanel(props: {
         </div>
       ) : null}
     </section>
+  );
+}
+
+export function Sp500TopUpsidePanel(props: {
+  onSelectSymbol: (symbol: string) => void;
+  selectedSymbol?: string | null;
+}) {
+  return (
+    <IndexTopUpsidePanel
+      apiPath="/api/sp500-top-upside"
+      ariaLabel="S&P 500 consensus upside and downside"
+      sessionKind="us"
+      {...props}
+    />
   );
 }
