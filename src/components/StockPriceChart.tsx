@@ -1,8 +1,12 @@
 "use client";
 
+import {
+  formatPeriodChangePct,
+  periodChangePctFromPoints,
+} from "@/lib/chart-period-return";
 import type { YahooChartRangeKey } from "@/lib/yahoo-chart-presets";
 import { YAHOO_CHART_PRESETS } from "@/lib/yahoo-chart-presets";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -38,6 +42,7 @@ export function StockPriceChart({ symbol }: { symbol: string }) {
       if (!symbol) return;
       setLoading(true);
       setError(null);
+      setPoints([]);
       try {
         const res = await fetch(
           `/api/chart?symbol=${encodeURIComponent(symbol)}&range=${r}`,
@@ -76,12 +81,32 @@ export function StockPriceChart({ symbol }: { symbol: string }) {
     load(range);
   }, [symbol, range, load]);
 
+  const periodPct = useMemo(
+    () => (loading ? null : periodChangePctFromPoints(points)),
+    [loading, points],
+  );
+
+  const periodPctText = loading ? "…" : formatPeriodChangePct(periodPct);
+  const periodPctClass =
+    loading || periodPct == null
+      ? "text-slate-500 dark:text-zinc-500"
+      : periodPct >= 0
+        ? "text-emerald-700 dark:text-emerald-300"
+        : "text-rose-700 dark:text-rose-300";
+
   return (
     <section className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-[var(--card)] p-4 sm:p-5">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">Price</h3>
-          <p className="text-xs text-slate-500 dark:text-zinc-500">
+          <p className="mt-1 font-mono text-sm tabular-nums">
+            <span className={periodPctClass}>{periodPctText}</span>
+            <span className="text-slate-500 dark:text-zinc-500">
+              {" "}
+              · {YAHOO_CHART_PRESETS[range].label}
+            </span>
+          </p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-zinc-500">
             Yahoo Finance intraday/daily history (ranges as on Yahoo).
           </p>
         </div>
