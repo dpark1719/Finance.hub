@@ -39,12 +39,23 @@ export type KospiHeatmapBranchJSON = {
   children: (KospiHeatmapBranchJSON | KospiHeatmapLeafJSON)[];
 };
 
+/** Yahoo `.KS` rows sometimes ship mis-scaled `marketCap`; cap so Recharts treemap layout stays finite. */
+const MAX_KOSPI_LEAF_CAP = 6e14;
+
 function leafSize(q: YahooV7QuoteRow | undefined): number {
-  if (q?.marketCap != null && q.marketCap > 0) return q.marketCap;
   const c = q?.c;
   const sh = q?.sharesOutstanding;
-  if (c != null && sh != null && c > 0 && sh > 0) return c * sh;
-  return 500_000;
+  const priceTimesShares =
+    c != null && sh != null && c > 0 && sh > 0 ? c * sh : null;
+
+  let cap = q?.marketCap;
+  if (cap != null && cap > 0 && priceTimesShares != null && cap > priceTimesShares * 50) {
+    cap = priceTimesShares;
+  }
+  if (cap == null || cap <= 0 || !Number.isFinite(cap)) {
+    cap = priceTimesShares ?? 500_000;
+  }
+  return Math.min(Math.max(cap, 50_000), MAX_KOSPI_LEAF_CAP);
 }
 
 function treemapSizeFromPerformance(baseCap: number, changePct: number | null): number {

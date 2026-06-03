@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 
 const getCachedHeatmap = unstable_cache(
   async (range: HeatmapRangeKey) => buildKospiHeatmapPayload(range),
-  ["kospi-heatmap-v1"],
+  ["kospi-heatmap-v2-cap-sanitize"],
   { revalidate: 3600 },
 );
 

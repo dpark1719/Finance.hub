@@ -25,6 +25,21 @@ type Leaf = {
 
 type Branch = { name: string; children: (Branch | Leaf)[] };
 
+const MAX_TREEMAP_LEAF_SIZE = 6e14;
+
+/** Clamp bad Yahoo caps before Recharts squarify (KOSPI `.KS` can mis-report marketCap). */
+function sanitizeHeatmapTree(nodes: Branch[]): Branch[] {
+  function walk(n: Branch | Leaf): Branch | Leaf {
+    if ("isLeaf" in n && n.isLeaf) {
+      const size = Number.isFinite(n.size) ? Math.min(Math.max(n.size, 50_000), MAX_TREEMAP_LEAF_SIZE) : 50_000;
+      return { ...n, size };
+    }
+    const branch = n as Branch;
+    return { ...branch, children: branch.children.map((c) => walk(c as Branch | Leaf)) as (Branch | Leaf)[] };
+  }
+  return nodes.map((b) => walk(b) as Branch);
+}
+
 type Payload = {
   name?: string;
   companyName?: string;
@@ -281,7 +296,9 @@ export function IndexHeatmap({
         setTree([]);
         return;
       }
-      const nextTree = Array.isArray(data.tree) ? data.tree : [];
+      const nextTree = sanitizeHeatmapTree(
+        Array.isArray(data.tree) ? (data.tree as Branch[]) : [],
+      );
       setTree(nextTree);
       setGeneratedAt(typeof data.generatedAt === "string" ? data.generatedAt : null);
       setRefreshAfter(typeof data.refreshAfter === "string" ? data.refreshAfter : null);

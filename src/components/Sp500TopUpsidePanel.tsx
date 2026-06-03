@@ -76,7 +76,9 @@ function RowList(props: {
   );
 }
 
-export type IndexSessionKind = "us" | "kr";
+import type { IndexSessionKind } from "@/types/index-market";
+
+export type { IndexSessionKind } from "@/types/index-market";
 
 function getSession(kind: IndexSessionKind) {
   return kind === "kr" ? getKrEquitySession() : getUsEquitySession();

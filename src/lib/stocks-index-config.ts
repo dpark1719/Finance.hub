@@ -1,4 +1,4 @@
-import type { IndexSessionKind } from "@/components/Sp500TopUpsidePanel";
+import type { IndexSessionKind } from "@/types/index-market";
 
 export type StocksIndexTab = "sp500" | "kospi200";
 
